@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>VoidLicense Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0A0A0A;color:#E8E8E8;padding:20px;font-size:14px}
+h1{font-size:22px;color:#7C4DFF;margin-bottom:16px;font-weight:800}
+#login{max-width:380px;margin:100px auto;padding:30px;background:#141414;border-radius:16px;border:1px solid #252525;text-align:center}
+#login h2{color:#7C4DFF;margin-bottom:20px}
+#login input{width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;margin-bottom:12px;outline:none}
+#login button{width:100%;padding:12px;background:#7C4DFF;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px}
+#app{display:none}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:16px;flex-wrap:wrap}
+.top .stats{display:flex;gap:20px;font-size:12px;color:#A0A0A0}
+.top .stats b{color:#7C4DFF;font-size:16px;margin-right:4px}
+.top button{padding:8px 16px;background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:8px;cursor:pointer}
+.actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.actions input{padding:8px 12px;background:#141414;border:1px solid #333;border-radius:8px;color:#fff;outline:none;font-size:13px}
+.actions button{padding:8px 20px;background:#7C4DFF;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700}
+table{width:100%;border-collapse:collapse;background:#141414;border-radius:12px;overflow:hidden}
+th,td{padding:10px 14px;text-align:left;font-size:13px;border-bottom:1px solid #1f1f1f}
+th{background:#1a1a1a;color:#A0A0A0;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+td.key{font-family:Consolas,monospace;color:#B39DFF;font-weight:700}
+td.user{color:#90C0FF;font-weight:700}
+td.hwid{font-family:Consolas,monospace;color:#666;font-size:11px}
+.online{color:#2ECC71;font-weight:700}
+.offline{color:#666}
+.expired{color:#FF2020}
+.banned{color:#FF2020;text-decoration:line-through;opacity:.6}
+.btn{padding:5px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:700;margin-right:3px;margin-bottom:3px}
+.btn-ban{background:#5a1d1d;color:#FF9090}
+.btn-unban{background:#1d5a2a;color:#90FF90}
+.btn-reset{background:#5a3a1d;color:#FFC090}
+.btn-extend{background:#1d3a5a;color:#90C0FF}
+.btn-user{background:#3a1d5a;color:#C090FF}
+.btn-del{background:#3a1d1d;color:#FF6060}
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;border:2px solid #7C4DFF;padding:10px 20px;border-radius:10px;display:none;z-index:9999}
+#toast.show{display:block}
+</style>
+</head>
+<body>
+<div id="login">
+  <h2>VoidLicense Admin</h2>
+  <input type="password" id="pw" placeholder="Password" autofocus onkeydown="if(event.key==='Enter')doLogin()">
+  <button onclick="doLogin()">Accedi</button>
+</div>
+<div id="app">
+  <div class="top">
+    <h1>Pannello Licenze</h1>
+    <div class="stats">
+      <span><b id="sTotal">0</b>totali</span>
+      <span><b id="sOnline">0</b>online</span>
+      <span><b id="sBanned">0</b>disattivate</span>
+      <span><b id="sExpired">0</b>scadute</span>
+    </div>
+    <button onclick="logout()">Esci</button>
+  </div>
+  <div class="actions">
+    <input type="text" id="newUser" placeholder="Nome utente" style="width:180px">
+    <input type="number" id="newDays" value="30" min="1" style="width:70px">
+    <input type="text" id="newNote" placeholder="Nota" style="width:180px">
+    <button onclick="createLic()">+ Nuova Licenza</button>
+  </div>
+  <table>
+    <thead><tr><th>Chiave</th><th>Utente</th><th>Stato</th><th>Scade</th><th>Ultimo ping</th><th>HWID</th><th>Azioni</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+<div id="toast"></div>
+<script>
+let PASS=''; let timer=null;
+function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Pass':PASS},body:JSON.stringify(b||{})});return r.json();}
+async function apiGet(p){const r=await fetch(p,{headers:{'X-Admin-Pass':PASS}});return r.json();}
+async function doLogin(){const pw=document.getElementById('pw').value;const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});const j=await r.json();if(j.ok){PASS=pw;document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';refresh();timer=setInterval(refresh,2000);}else alert('Password errata');}
+function logout(){PASS='';if(timer)clearInterval(timer);location.reload();}
+async function refresh(){const j=await apiGet('/api/admin/list');if(!j.ok)return;const rows=document.getElementById('rows');rows.innerHTML='';let on=0,ban=0,exp=0;j.licenses.sort((a,b)=>(b.online-a.online)||a.key.localeCompare(b.key));for(const l of j.licenses){if(l.online)on++;if(l.banned)ban++;if(l.expired)exp++;const expDate=new Date(l.expiresAt).toLocaleDateString('it-IT');const daysLeft=Math.floor((l.expiresAt-j.serverTime)/86400000);const ago=l.lastPingAgo===null?'-':(l.lastPingAgo<60?l.lastPingAgo+'s':Math.floor(l.lastPingAgo/60)+'m');const hwidShort=l.hwid?l.hwid.slice(0,8)+'...':'-';const tr=document.createElement('tr');tr.innerHTML='<td class="key '+(l.banned?'banned':'')+'">'+l.key+'</td><td class="user">'+(l.username||'-')+'</td><td>'+(l.banned?'<span class="expired">DISATTIVATA</span>':(l.expired?'<span class="expired">SCADUTA</span>':(l.online?'<span class="online">ONLINE</span>':'<span class="offline">Offline</span>')))+'</td><td>'+expDate+' ('+daysLeft+'gg)</td><td>'+ago+'</td><td class="hwid" title="'+(l.hwid||'')+'">'+hwidShort+'</td><td><button class="btn '+(l.banned?'btn-unban':'btn-ban')+'" onclick="toggleBan(\''+l.key+'\','+(!l.banned)+')">'+(l.banned?'Riattiva':'Disattiva')+'</button><button class="btn btn-reset" onclick="resetHwid(\''+l.key+'\')">Reset HWID</button><button class="btn btn-user" onclick="resetUser(\''+l.key+'\')">Reset User</button><button class="btn btn-extend" onclick="extend(\''+l.key+'\')">+30gg</button><button class="btn btn-del" onclick="delLic(\''+l.key+'\')">Elimina</button></td>';rows.appendChild(tr);}document.getElementById('sTotal').textContent=j.licenses.length;document.getElementById('sOnline').textContent=on;document.getElementById('sBanned').textContent=ban;document.getElementById('sExpired').textContent=exp;}
+async function createLic(){const username=document.getElementById('newUser').value.trim();const days=parseInt(document.getElementById('newDays').value,10)||30;const note=document.getElementById('newNote').value;if(!username){showToast('Inserisci nome utente');return;}const j=await api('/api/admin/create',{days,username,note});if(j.ok){showToast('Chiave: '+j.license.key);document.getElementById('newUser').value='';document.getElementById('newNote').value='';refresh();}else showToast(j.msg||'Errore');}
+async function toggleBan(k,b){await api('/api/admin/ban',{key:k,banned:b});refresh();}
+async function resetHwid(k){if(confirm('Reset HWID?')){await api('/api/admin/reset',{key:k});refresh();}}
+async function resetUser(k){if(confirm('Reset utente?')){await api('/api/admin/resetUser',{key:k});refresh();}}
+async function extend(k){await api('/api/admin/extend',{key:k,days:30});refresh();}
+async function delLic(k){if(confirm('Eliminare?')){await api('/api/admin/delete',{key:k});refresh();}}
+</script>
+</body>
+</html>
