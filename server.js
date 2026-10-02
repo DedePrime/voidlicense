@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const PORT = process.env.PORT || 8090;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'void123';
 const ONLINE_TIMEOUT = 30000;
 const SESSION_TTL = 1000 * 60 * 60 * 12; // 12h
 const LOGIN_WINDOW = 1000 * 60 * 5;      // 5 min
