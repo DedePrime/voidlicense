@@ -92,6 +92,8 @@ td.hwid{font-family:'JetBrains Mono',monospace;color:var(--dim);font-size:10px}
 .badge.banned{color:#FCA5A5;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4)}
 .badge.banned::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--err);box-shadow:0 0 8px var(--err)}
 .badge.infinite{color:var(--accent-3);background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.3)}
+.badge.waiting{color:#FCD34D;background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3)}
+.badge.waiting::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--warn);box-shadow:0 0 8px var(--warn);animation:pulse 2s infinite}
 .row-arrow{color:var(--dim);transition:all .15s;display:inline-flex}
 tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 .empty-row td{text-align:center;padding:70px 20px;color:var(--dim);font-size:12px}
@@ -174,7 +176,7 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 .log-item .log-detail{font-size:11px;color:var(--text);margin-top:3px;font-family:'JetBrains Mono',monospace;word-break:break-all}
 .log-item .log-time{font-size:9px;color:var(--dim);margin-top:3px}
 .log-item.ban .log-action,.log-item.delete .log-action,.log-item.reset-hwid .log-action{color:#FCA5A5}
-.log-item.create .log-action,.log-item.login\.ok .log-action{color:#4ADE80}
+.log-item.create .log-action,.log-item.login\.ok .log-action,.log-item.register .log-action{color:#4ADE80}
 .log-item.set-infinite .log-action{color:var(--accent-3)}
 
 /* Toast */
@@ -330,7 +332,7 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
   </div>
 </div>
 
-<!-- MODALE: CONFERMA (con input opzionale per i giorni) -->
+<!-- MODALE: CONFERMA -->
 <div class="modal-bg" id="modalConfirm">
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
@@ -468,6 +470,7 @@ async function refresh(){
 
   for (const l of j.licenses) {
     const isInf = !!l.infinite;
+    const isWaiting = !l.username;
     const ed = isInf ? '' : new Date(l.expiresAt).toLocaleDateString('it-IT');
     const dl = isInf ? '' : Math.floor((l.expiresAt - j.serverTime) / 86400000);
     const hs = l.hwid ? l.hwid.slice(0,8) + '…' : '—';
@@ -475,6 +478,7 @@ async function refresh(){
     if (l.banned) badge = '<span class="badge banned">Disattivata</span>';
     else if (l.expired) badge = '<span class="badge expired">Scaduta</span>';
     else if (l.online) badge = '<span class="badge online">Online</span>';
+    else if (isWaiting) badge = '<span class="badge waiting">In attesa</span>';
     else badge = '<span class="badge offline">Offline</span>';
 
     const expiresCell = isInf
@@ -485,7 +489,7 @@ async function refresh(){
     tr.onclick = () => openDetail(l.key);
     tr.innerHTML =
       '<td class="key">' + esc(l.key) + '</td>' +
-      '<td class="user">' + (l.username ? esc(l.username) : '—') + '</td>' +
+      '<td class="user">' + (l.username ? esc(l.username) : '<span style="color:var(--dim);font-weight:500">— in attesa —</span>') + '</td>' +
       '<td>' + badge + '</td>' +
       '<td>' + expiresCell + '</td>' +
       '<td style="color:var(--mid)">' + timeAgo(l.lastPingAgo) + '</td>' +
@@ -557,9 +561,9 @@ function openCreate(){
   modalDirty.create = false;
   document.getElementById('createBody').innerHTML =
     '<div class="field">' +
-      '<label>Nome utente</label>' +
-      '<input type="text" id="cUser" placeholder="es. MarioRossi" autocomplete="off">' +
-      '<div class="hint">Deve essere univoco tra tutte le licenze</div>' +
+      '<label>Nome utente <span style="color:var(--dim);font-weight:500;text-transform:none;letter-spacing:0">(opzionale)</span></label>' +
+      '<input type="text" id="cUser" placeholder="Lascia vuoto → il cliente sceglie al primo avvio" autocomplete="off">' +
+      '<div class="hint">Se lo compili, la licenza è già associata a questo nome. Se lo lasci vuoto, il cliente sceglierà il suo nome al primo avvio del client.</div>' +
     '</div>' +
     '<div class="field">' +
       '<label>Durata (giorni)</label>' +
@@ -608,7 +612,6 @@ async function createLic(){
   const infinite = document.getElementById('cInfinite').checked;
   const days = infinite ? 0 : (parseInt(document.getElementById('cDays').value, 10) || 30);
   const note = document.getElementById('cNote').value;
-  if (!username) return showToast('Inserisci il nome utente', 'error');
   if (!infinite && (days < 1 || days > 36500)) return showToast('Giorni non validi (1-36500)', 'error');
   const j = await api('/api/admin/create', {days, username, note, infinite});
   if (!j.ok) return showToast(j.msg || 'Errore', 'error');
@@ -622,6 +625,7 @@ function showSuccessScreen(lic){
   const expiresFmt = isInf ? '∞ Mai' : fmtDateOnly(lic.expiresAt);
   const createdFmt = fmtDate(lic.createdAt);
   const durationFmt = isInf ? '∞ Infinita' : Math.round((lic.expiresAt - lic.createdAt) / 86400000) + ' giorni';
+  const userFmt = lic.username ? esc(lic.username) : '<span style="color:var(--warn)">In attesa</span>';
 
   document.getElementById('createBody').innerHTML =
     '<div class="success-screen">' +
@@ -629,7 +633,7 @@ function showSuccessScreen(lic){
         '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
       '</div>' +
       '<h3>Licenza creata!</h3>' +
-      '<p>Copiala e inviala all\'utente. Non verrà mostrata di nuovo dopo la chiusura.</p>' +
+      '<p>Copiala e inviala al cliente. Il nome utente verrà impostato da lui al primo avvio.</p>' +
       '<div class="key-display">' +
         '<div class="key-value">' + esc(lic.key) + '</div>' +
       '</div>' +
@@ -638,7 +642,7 @@ function showSuccessScreen(lic){
         '<span id="copyLabel">Copia chiave</span>' +
       '</button>' +
       '<div class="key-meta">' +
-        '<div class="meta-item"><div class="lbl">Utente</div><div class="val">' + esc(lic.username) + '</div></div>' +
+        '<div class="meta-item"><div class="lbl">Utente</div><div class="val">' + userFmt + '</div></div>' +
         '<div class="meta-item"><div class="lbl">Durata</div><div class="val">' + durationFmt + '</div></div>' +
         '<div class="meta-item"><div class="lbl">Scade il</div><div class="val">' + expiresFmt + '</div></div>' +
         '<div class="meta-item"><div class="lbl">Creata</div><div class="val">' + createdFmt + '</div></div>' +
@@ -670,11 +674,13 @@ async function openDetail(key){
   if (!j.ok || !j.licenses[0]) return showToast('Licenza non trovata', 'error');
   const l = j.licenses[0];
   const isInf = !!l.infinite;
+  const isWaiting = !l.username;
 
   let badge;
   if (l.banned) badge = '<span class="badge banned">Disattivata</span>';
   else if (l.expired) badge = '<span class="badge expired">Scaduta</span>';
   else if (l.online) badge = '<span class="badge online">Online</span>';
+  else if (isWaiting) badge = '<span class="badge waiting">In attesa</span>';
   else badge = '<span class="badge offline">Offline</span>';
 
   const dl = isInf ? '∞' : Math.floor((l.expiresAt - j.serverTime) / 86400000);
@@ -696,7 +702,8 @@ async function openDetail(key){
     '</div>' +
     '<div class="field">' +
       '<label>Nome utente</label>' +
-      '<input type="text" id="dUser" value="' + esc(l.username||'') + '" placeholder="—">' +
+      '<input type="text" id="dUser" value="' + esc(l.username||'') + '" placeholder="— in attesa che il cliente lo imposti —">' +
+      (isWaiting ? '<div class="hint" style="color:var(--warn)">Il cliente non ha ancora attivato la licenza. Il nome apparirà qui dopo la registrazione.</div>' : '') +
     '</div>' +
     '<div class="field">' +
       '<label>HWID</label>' +
