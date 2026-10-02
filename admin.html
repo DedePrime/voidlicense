@@ -2,87 +2,989 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<title>VoidLicense Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoidLicense · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
+:root{
+  --bg:#07070B;--card:rgba(22,22,29,.72);--card-solid:#16161D;--card-2:#1C1C26;
+  --line:rgba(255,255,255,.06);--line-strong:rgba(255,255,255,.12);
+  --accent:#8B5CF6;--accent-2:#A78BFA;--accent-3:#C4B5FD;
+  --glow:rgba(139,92,246,.45);--text:#F0F0F5;--mid:#9090A0;--dim:#55555F;
+  --ok:#22C55E;--ok-glow:rgba(34,197,94,.35);--err:#EF4444;--warn:#F59E0B;
+}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:#0A0A0A;color:#E8E8E8;padding:20px;font-size:14px}
-h1{font-size:22px;color:#7C4DFF;margin-bottom:16px;font-weight:800}
-#login{max-width:380px;margin:100px auto;padding:30px;background:#141414;border-radius:16px;border:1px solid #252525;text-align:center}
-#login h2{color:#7C4DFF;margin-bottom:20px}
-#login input{width:100%;padding:12px;background:#1a1a1a;border:1px solid #333;border-radius:8px;color:#fff;font-size:14px;margin-bottom:12px;outline:none}
-#login button{width:100%;padding:12px;background:#7C4DFF;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:14px}
-#app{display:none}
-.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:16px;flex-wrap:wrap}
-.top .stats{display:flex;gap:20px;font-size:12px;color:#A0A0A0}
-.top .stats b{color:#7C4DFF;font-size:16px;margin-right:4px}
-.top button{padding:8px 16px;background:#1a1a1a;color:#fff;border:1px solid #333;border-radius:8px;cursor:pointer}
-.actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.actions input{padding:8px 12px;background:#141414;border:1px solid #333;border-radius:8px;color:#fff;outline:none;font-size:13px}
-.actions button{padding:8px 20px;background:#7C4DFF;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:700}
-table{width:100%;border-collapse:collapse;background:#141414;border-radius:12px;overflow:hidden}
-th,td{padding:10px 14px;text-align:left;font-size:13px;border-bottom:1px solid #1f1f1f}
-th{background:#1a1a1a;color:#A0A0A0;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px}
-td.key{font-family:Consolas,monospace;color:#B39DFF;font-weight:700}
-td.user{color:#90C0FF;font-weight:700}
-td.hwid{font-family:Consolas,monospace;color:#666;font-size:11px}
-.online{color:#2ECC71;font-weight:700}
-.offline{color:#666}
-.expired{color:#FF2020}
-.banned{color:#FF2020;text-decoration:line-through;opacity:.6}
-.btn{padding:5px 10px;border-radius:6px;border:none;cursor:pointer;font-size:11px;font-weight:700;margin-right:3px;margin-bottom:3px}
-.btn-ban{background:#5a1d1d;color:#FF9090}
-.btn-unban{background:#1d5a2a;color:#90FF90}
-.btn-reset{background:#5a3a1d;color:#FFC090}
-.btn-extend{background:#1d3a5a;color:#90C0FF}
-.btn-user{background:#3a1d5a;color:#C090FF}
-.btn-del{background:#3a1d1d;color:#FF6060}
-#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#1a1a1a;border:2px solid #7C4DFF;padding:10px 20px;border-radius:10px;display:none;z-index:9999}
-#toast.show{display:block}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);padding:28px;font-size:13px;min-height:100vh;overflow-x:hidden;position:relative;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 600px at 12% -10%,rgba(139,92,246,.18),transparent 60%),radial-gradient(800px 500px at 100% 0%,rgba(59,130,246,.12),transparent 55%),radial-gradient(700px 700px at 50% 120%,rgba(167,139,250,.10),transparent 60%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);pointer-events:none;z-index:0}
+#login,#app{position:relative;z-index:1}
+
+/* LOGIN */
+#login{max-width:400px;margin:80px auto;padding:44px 36px 36px;background:var(--card);backdrop-filter:blur(20px);border:1px solid var(--line-strong);border-radius:24px;text-align:center;box-shadow:0 30px 80px -20px rgba(0,0,0,.7),0 0 60px -20px var(--glow);animation:fadeUp .6s cubic-bezier(.2,.9,.3,1);position:relative;overflow:hidden}
+#login::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--accent-2),transparent);opacity:.8}
+.logo-orb{width:64px;height:64px;margin:0 auto 20px;border-radius:20px;background:linear-gradient(135deg,var(--accent),#6D28D9);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;box-shadow:0 12px 40px -8px var(--glow),0 0 0 1px rgba(255,255,255,.1) inset}
+#login .brand-sub{color:var(--accent-3);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+#login h2{color:#fff;margin-bottom:6px;font-size:22px;font-weight:800;letter-spacing:-.4px}
+#login p{color:var(--mid);font-size:12px;margin-bottom:26px}
+#login input{width:100%;padding:14px 16px;background:rgba(0,0,0,.35);border:1px solid var(--line-strong);border-radius:12px;color:#fff;font-size:13px;margin-bottom:14px;outline:none;font-family:inherit;transition:all .2s;letter-spacing:2px}
+#login input::placeholder{letter-spacing:normal;color:var(--dim)}
+#login input:focus{border-color:var(--accent);background:rgba(139,92,246,.06);box-shadow:0 0 0 4px rgba(139,92,246,.15)}
+#login button{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#7C3AED);color:#fff;border:none;border-radius:12px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;letter-spacing:.3px;transition:all .2s;box-shadow:0 10px 30px -10px var(--glow)}
+#login button:hover{transform:translateY(-1px);box-shadow:0 14px 40px -10px var(--glow)}
+#login button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* APP */
+#app{display:none;max-width:1280px;margin:0 auto;animation:fadeUp .5s cubic-bezier(.2,.9,.3,1)}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;gap:20px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-mark{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#6D28D9);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#fff;box-shadow:0 10px 30px -10px var(--glow),0 0 0 1px rgba(255,255,255,.1) inset}
+h1{font-size:22px;color:#fff;margin-bottom:2px;font-weight:800;letter-spacing:-.5px}
+.sub{color:var(--dim);font-size:11px;font-weight:500;display:flex;align-items:center;gap:6px}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(34,197,94,.15);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 3px rgba(34,197,94,.15)}50%{opacity:.6;box-shadow:0 0 0 6px rgba(34,197,94,.05)}}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{background:var(--card);backdrop-filter:blur(12px);border:1px solid var(--line-strong);padding:10px 16px;border-radius:14px;font-size:10px;color:var(--mid);text-transform:uppercase;letter-spacing:1.2px;font-weight:600;display:flex;align-items:center;gap:10px;transition:all .2s;min-width:90px}
+.stat b{color:#fff;font-size:20px;font-weight:800;letter-spacing:-.5px;background:linear-gradient(135deg,#fff,var(--accent-3));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat.ok b{background:linear-gradient(135deg,#fff,var(--ok));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat.err b{background:linear-gradient(135deg,#fff,var(--err));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat.warn b{background:linear-gradient(135deg,#fff,var(--warn));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.top-actions{display:flex;gap:8px}
+.icon-btn{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.04);color:var(--mid);border:1px solid var(--line-strong);cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.icon-btn:hover{background:rgba(139,92,246,.1);border-color:var(--accent);color:var(--accent-3);transform:translateY(-1px)}
+.icon-btn.danger:hover{background:rgba(239,68,68,.1);border-color:var(--err);color:#FCA5A5}
+
+/* Toolbar */
+.toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+.search-wrap{flex:1;min-width:220px;position:relative}
+.search-wrap input{width:100%;padding:12px 14px 12px 40px;background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--line-strong);border-radius:12px;color:#fff;outline:none;font-size:12px;font-family:inherit;transition:all .2s}
+.search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.15)}
+.search-wrap input::placeholder{color:var(--dim)}
+.search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--dim);pointer-events:none}
+.filters{display:flex;gap:4px;background:var(--card);backdrop-filter:blur(16px);padding:5px;border-radius:12px;border:1px solid var(--line-strong);flex-wrap:wrap}
+.filters button{padding:8px 12px;background:transparent;color:var(--mid);border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;transition:all .15s;letter-spacing:.3px}
+.filters button:hover{color:var(--text)}
+.filters button.active{background:linear-gradient(135deg,var(--accent),#7C3AED);color:#fff;box-shadow:0 4px 12px -3px var(--glow)}
+.btn-new{padding:12px 22px;background:linear-gradient(135deg,var(--accent),#7C3AED);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:700;font-size:12px;font-family:inherit;transition:all .2s;box-shadow:0 8px 24px -10px var(--glow);display:flex;align-items:center;gap:8px}
+.btn-new:hover{transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--glow)}
+
+/* Tabella */
+.table-wrap{background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--line-strong);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.9)}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:800px}
+th,td{padding:14px 18px;text-align:left;font-size:12px;border-bottom:1px solid var(--line)}
+th{background:rgba(28,28,38,.6);color:var(--mid);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:1.4px;position:sticky;top:0;backdrop-filter:blur(20px);z-index:2}
+tbody tr{transition:background .15s;animation:rowIn .35s ease both;cursor:pointer}
+tbody tr:hover{background:rgba(139,92,246,.05)}
+tbody tr:last-child td{border-bottom:none}
+@keyframes rowIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+td.key{font-family:'JetBrains Mono',monospace;color:var(--accent-3);font-weight:700;font-size:11px;letter-spacing:.5px}
+td.user{color:#93C5FD;font-weight:700}
+td.hwid{font-family:'JetBrains Mono',monospace;color:var(--dim);font-size:10px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;border:1px solid transparent}
+.badge.online{color:#4ADE80;background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);box-shadow:0 0 12px -2px var(--ok-glow)}
+.badge.online::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 8px var(--ok);animation:pulse 2s infinite}
+.badge.offline{color:var(--mid);background:rgba(255,255,255,.03);border-color:var(--line-strong)}
+.badge.offline::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--dim)}
+.badge.expired{color:#F87171;background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)}
+.badge.expired::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--err);box-shadow:0 0 8px var(--err)}
+.badge.banned{color:#FCA5A5;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4)}
+.badge.banned::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--err);box-shadow:0 0 8px var(--err)}
+.badge.infinite{color:var(--accent-3);background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.3)}
+.row-arrow{color:var(--dim);transition:all .15s;display:inline-flex}
+tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
+.empty-row td{text-align:center;padding:70px 20px;color:var(--dim);font-size:12px}
+
+/* Paginazione */
+.pagination{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid var(--line);font-size:11px;color:var(--mid);flex-wrap:wrap;gap:10px}
+.pagination .pages{display:flex;gap:4px}
+.pagination button{padding:6px 12px;background:rgba(255,255,255,.04);border:1px solid var(--line-strong);border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;transition:all .15s}
+.pagination button:hover:not(:disabled){background:rgba(139,92,246,.1);border-color:var(--accent);color:var(--accent-3)}
+.pagination button:disabled{opacity:.3;cursor:not-allowed}
+.pagination button.active{background:linear-gradient(135deg,var(--accent),#7C3AED);border-color:transparent;color:#fff}
+
+/* MODALI */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s}
+.modal-bg.show{display:flex}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--card-solid);border:1px solid var(--line-strong);border-radius:20px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 40px 100px -20px rgba(0,0,0,.9),0 0 60px -20px var(--glow);animation:modalIn .3s cubic-bezier(.2,.9,.3,1);position:relative}
+.modal.wide{max-width:640px}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--accent-2),transparent);opacity:.8;border-radius:20px 20px 0 0}
+.modal-header{padding:22px 26px 18px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.modal-header .title-block h3{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.3px;margin-bottom:4px}
+.modal-header .title-block p{font-size:12px;color:var(--mid);line-height:1.5}
+.modal-close{width:32px;height:32px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line-strong);color:var(--mid);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.modal-close:hover{background:rgba(239,68,68,.1);border-color:var(--err);color:#FCA5A5}
+.modal-body{padding:22px 26px}
+.modal-footer{padding:16px 26px 22px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+
+/* Campi */
+.field{margin-bottom:16px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mid);margin-bottom:8px}
+.field input,.field textarea{width:100%;padding:12px 14px;background:rgba(0,0,0,.35);border:1px solid var(--line-strong);border-radius:10px;color:#fff;outline:none;font-size:13px;font-family:inherit;transition:all .2s}
+.field input:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,92,246,.15);background:rgba(139,92,246,.05)}
+.field textarea{resize:vertical;min-height:70px;line-height:1.5}
+.field .hint{font-size:10px;color:var(--dim);margin-top:6px;line-height:1.5}
+.field .value{font-family:'JetBrains Mono',monospace;color:var(--accent-3);font-size:12px;padding:11px 14px;background:rgba(0,0,0,.3);border-radius:8px;border:1px solid var(--line);word-break:break-all;line-height:1.5}
+.field input[type=date]{color-scheme:dark}
+
+/* Toggle campo */
+.toggle-field{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(0,0,0,.35);border:1px solid var(--line-strong);border-radius:10px;cursor:pointer;font-weight:600;font-size:12px;transition:all .15s;user-select:none}
+.toggle-field:hover{border-color:var(--accent);background:rgba(139,92,246,.05)}
+.toggle-field input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+
+/* Expiry block */
+.expiry-block{padding:14px;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:12px}
+.expiry-block .expiry-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mid);margin-bottom:10px}
+.quick-days{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.quick-days button{padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--line-strong);border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;transition:all .15s}
+.quick-days button:hover{background:rgba(139,92,246,.1);border-color:var(--accent);color:var(--accent-3)}
+
+/* Bottoni */
+.btn-primary{padding:11px 22px;background:linear-gradient(135deg,var(--accent),#7C3AED);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:inherit;transition:all .2s;box-shadow:0 8px 24px -10px var(--glow);display:inline-flex;align-items:center;gap:8px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--glow)}
+.btn-primary.danger{background:linear-gradient(135deg,var(--err),#B91C1C);box-shadow:0 8px 24px -10px rgba(239,68,68,.5)}
+.btn-ghost{padding:11px 22px;background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line-strong);border-radius:10px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;transition:all .2s}
+.btn-ghost:hover{background:rgba(255,255,255,.08)}
+
+/* Schermata successo */
+.success-screen{text-align:center;padding:10px 0 0}
+.success-icon{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(34,197,94,.05));border:1px solid rgba(34,197,94,.35);display:flex;align-items:center;justify-content:center;animation:popIn .4s cubic-bezier(.2,.9,.3,1)}
+@keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.success-icon svg{color:var(--ok);filter:drop-shadow(0 0 12px var(--ok-glow))}
+.success-screen h3{font-size:18px;font-weight:800;color:#fff;margin-bottom:6px;letter-spacing:-.3px}
+.success-screen p{font-size:12px;color:var(--mid);margin-bottom:22px;line-height:1.5}
+.key-display{background:rgba(0,0,0,.45);border:1px solid var(--line-strong);border-radius:14px;padding:20px;margin-bottom:12px}
+.key-display .key-value{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:700;color:var(--accent-3);letter-spacing:1.5px;word-break:break-all;text-shadow:0 0 20px var(--glow)}
+.copy-large{padding:12px 20px;background:linear-gradient(135deg,var(--accent),#7C3AED);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:inherit;transition:all .2s;box-shadow:0 8px 24px -10px var(--glow);display:inline-flex;align-items:center;gap:8px;width:100%;justify-content:center;margin-bottom:8px}
+.copy-large:hover{transform:translateY(-1px)}
+.copy-large.copied{background:linear-gradient(135deg,var(--ok),#15803D);box-shadow:0 8px 24px -10px var(--ok-glow)}
+.key-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;text-align:left}
+.key-meta .meta-item{padding:10px 12px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px}
+.key-meta .meta-item .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:3px}
+.key-meta .meta-item .val{font-size:12px;font-weight:700;color:var(--text)}
+
+/* Log list */
+.log-item{padding:11px 14px;border-radius:10px;margin-bottom:6px;background:rgba(0,0,0,.25);border:1px solid var(--line);transition:all .15s;animation:rowIn .3s ease both}
+.log-item:hover{background:rgba(139,92,246,.06);border-color:var(--line-strong)}
+.log-item .log-action{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent-3)}
+.log-item .log-detail{font-size:11px;color:var(--text);margin-top:3px;font-family:'JetBrains Mono',monospace;word-break:break-all}
+.log-item .log-time{font-size:9px;color:var(--dim);margin-top:3px}
+.log-item.ban .log-action,.log-item.delete .log-action,.log-item.reset-hwid .log-action{color:#FCA5A5}
+.log-item.create .log-action,.log-item.login\.ok .log-action{color:#4ADE80}
+.log-item.set-infinite .log-action{color:var(--accent-3)}
+
+/* Toast */
+#toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-200%);background:rgba(22,22,29,.95);backdrop-filter:blur(20px);border:1px solid var(--accent);padding:14px 22px;border-radius:14px;font-size:12px;font-weight:600;z-index:99999;transition:transform .35s cubic-bezier(.2,.9,.3,1);box-shadow:0 20px 60px -15px var(--glow);max-width:90vw;color:#fff;display:flex;align-items:center;gap:10px}
+#toast::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent-2);box-shadow:0 0 12px var(--accent-2);flex-shrink:0}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.success{border-color:var(--ok)}
+#toast.success::before{background:var(--ok);box-shadow:0 0 12px var(--ok)}
+#toast.error{border-color:var(--err)}
+#toast.error::before{background:var(--err);box-shadow:0 0 12px var(--err)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(139,92,246,.3);border-radius:10px;border:2px solid transparent;background-clip:padding-box}
+::-webkit-scrollbar-thumb:hover{background:rgba(139,92,246,.5);background-clip:padding-box;border:2px solid transparent}
+
+@media (max-width:900px){
+  body{padding:16px}
+  .top{flex-direction:column;align-items:flex-start}
+  .stats{width:100%}
+  .stat{flex:1;min-width:0}
+  #login{margin:40px auto;padding:32px 24px}
+  .key-meta{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
+
+<!-- LOGIN -->
 <div id="login">
-  <h2>VoidLicense Admin</h2>
-  <input type="password" id="pw" placeholder="Password" autofocus onkeydown="if(event.key==='Enter')doLogin()">
-  <button onclick="doLogin()">Accedi</button>
+  <div class="logo-orb">V</div>
+  <div class="brand-sub">VoidLicense</div>
+  <h2>Accesso Admin</h2>
+  <p>Inserisci la password per continuare</p>
+  <input type="password" id="pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+  <button id="loginBtn" onclick="doLogin()">Accedi alla Dashboard</button>
 </div>
+
+<!-- APP -->
 <div id="app">
   <div class="top">
-    <h1>Pannello Licenze</h1>
-    <div class="stats">
-      <span><b id="sTotal">0</b>totali</span>
-      <span><b id="sOnline">0</b>online</span>
-      <span><b id="sBanned">0</b>disattivate</span>
-      <span><b id="sExpired">0</b>scadute</span>
+    <div class="brand">
+      <div class="brand-mark">V</div>
+      <div>
+        <h1>Pannello Licenze</h1>
+        <div class="sub"><span class="live-dot"></span> Gestione licenze in tempo reale</div>
+      </div>
     </div>
-    <button onclick="logout()">Esci</button>
+    <div class="stats">
+      <div class="stat"><b id="sTotal">0</b>Totali</div>
+      <div class="stat ok"><b id="sOnline">0</b>Online</div>
+      <div class="stat err"><b id="sBanned">0</b>Disattivate</div>
+      <div class="stat warn"><b id="sExpired">0</b>Scadute</div>
+    </div>
+    <div class="top-actions">
+      <button class="icon-btn" title="Log attività" onclick="openLogs()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </button>
+      <button class="icon-btn" title="Esporta CSV" onclick="exportCsv()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="icon-btn danger" title="Esci" onclick="logout()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>
   </div>
-  <div class="actions">
-    <input type="text" id="newUser" placeholder="Nome utente" style="width:180px">
-    <input type="number" id="newDays" value="30" min="1" style="width:70px">
-    <input type="text" id="newNote" placeholder="Nota" style="width:180px">
-    <button onclick="createLic()">+ Nuova Licenza</button>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search" placeholder="Cerca per chiave, utente, HWID o nota…" oninput="debouncedRefresh()">
+    </div>
+    <div class="filters" id="filters">
+      <button data-filter="all" class="active">Tutte</button>
+      <button data-filter="online">Online</button>
+      <button data-filter="offline">Offline</button>
+      <button data-filter="expired">Scadute</button>
+      <button data-filter="banned">Disattivate</button>
+      <button data-filter="infinite">∞ Infinite</button>
+    </div>
+    <button class="btn-new" onclick="openCreate()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nuova Licenza
+    </button>
   </div>
-  <table>
-    <thead><tr><th>Chiave</th><th>Utente</th><th>Stato</th><th>Scade</th><th>Ultimo ping</th><th>HWID</th><th>Azioni</th></tr></thead>
-    <tbody id="rows"></tbody>
-  </table>
+
+  <div class="table-wrap">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Chiave</th><th>Utente</th><th>Stato</th><th>Scade</th>
+            <th>Ultimo ping</th><th>HWID</th><th style="width:40px"></th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <div id="pageInfo">—</div>
+      <div class="pages" id="pages"></div>
+    </div>
+  </div>
 </div>
+
+<!-- MODALE: CREA -->
+<div class="modal-bg" id="modalCreate">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="title-block">
+        <h3>Nuova Licenza</h3>
+        <p>Crea una nuova chiave di attivazione</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalCreate')" title="Chiudi">✕</button>
+    </div>
+    <div class="modal-body" id="createBody"></div>
+    <div class="modal-footer" id="createFooter"></div>
+  </div>
+</div>
+
+<!-- MODALE: DETTAGLIO -->
+<div class="modal-bg" id="modalDetail">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="title-block">
+        <h3>Dettagli Licenza</h3>
+        <p>Visualizza e modifica i dati della licenza</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalDetail')" title="Chiudi">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+    <div class="modal-footer" id="detailFooter"></div>
+  </div>
+</div>
+
+<!-- MODALE: LOG -->
+<div class="modal-bg" id="modalLogs">
+  <div class="modal wide">
+    <div class="modal-header">
+      <div class="title-block">
+        <h3>Log Attività</h3>
+        <p>Ultime 200 operazioni registrate</p>
+      </div>
+      <button class="modal-close" onclick="closeModal('modalLogs')" title="Chiudi">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="logsList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal('modalLogs')">Chiudi</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALE: CONFERMA (con input opzionale per i giorni) -->
+<div class="modal-bg" id="modalConfirm">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header">
+      <div class="title-block">
+        <h3 id="confirmTitle">Conferma</h3>
+        <p id="confirmMsg">Sei sicuro?</p>
+      </div>
+      <button class="modal-close" onclick="cancelConfirm()" title="Chiudi">✕</button>
+    </div>
+    <div class="modal-body" id="confirmInputWrap" style="display:none">
+      <div class="field" style="margin:0">
+        <label>Giorni da aggiungere</label>
+        <input type="number" id="confirmInput" min="1" max="36500" value="30">
+        <div class="hint">Tra 1 e 36500 giorni (100 anni). Puoi anche scrivere direttamente.</div>
+        <div class="quick-days">
+          <button type="button" onclick="setConfirmDays(7)">7gg</button>
+          <button type="button" onclick="setConfirmDays(30)">30gg</button>
+          <button type="button" onclick="setConfirmDays(90)">90gg</button>
+          <button type="button" onclick="setConfirmDays(365)">1 anno</button>
+          <button type="button" onclick="setConfirmDays(3650)">10 anni</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="cancelConfirm()">Annulla</button>
+      <button class="btn-primary danger" id="confirmOk">Conferma</button>
+    </div>
+  </div>
+</div>
+
 <div id="toast"></div>
+
 <script>
-let PASS=''; let timer=null;
-function showToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
-async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Pass':PASS},body:JSON.stringify(b||{})});return r.json();}
-async function apiGet(p){const r=await fetch(p,{headers:{'X-Admin-Pass':PASS}});return r.json();}
-async function doLogin(){const pw=document.getElementById('pw').value;const r=await fetch('/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});const j=await r.json();if(j.ok){PASS=pw;document.getElementById('login').style.display='none';document.getElementById('app').style.display='block';refresh();timer=setInterval(refresh,2000);}else alert('Password errata');}
-function logout(){PASS='';if(timer)clearInterval(timer);location.reload();}
-async function refresh(){const j=await apiGet('/api/admin/list');if(!j.ok)return;const rows=document.getElementById('rows');rows.innerHTML='';let on=0,ban=0,exp=0;j.licenses.sort((a,b)=>(b.online-a.online)||a.key.localeCompare(b.key));for(const l of j.licenses){if(l.online)on++;if(l.banned)ban++;if(l.expired)exp++;const expDate=new Date(l.expiresAt).toLocaleDateString('it-IT');const daysLeft=Math.floor((l.expiresAt-j.serverTime)/86400000);const ago=l.lastPingAgo===null?'-':(l.lastPingAgo<60?l.lastPingAgo+'s':Math.floor(l.lastPingAgo/60)+'m');const hwidShort=l.hwid?l.hwid.slice(0,8)+'...':'-';const tr=document.createElement('tr');tr.innerHTML='<td class="key '+(l.banned?'banned':'')+'">'+l.key+'</td><td class="user">'+(l.username||'-')+'</td><td>'+(l.banned?'<span class="expired">DISATTIVATA</span>':(l.expired?'<span class="expired">SCADUTA</span>':(l.online?'<span class="online">ONLINE</span>':'<span class="offline">Offline</span>')))+'</td><td>'+expDate+' ('+daysLeft+'gg)</td><td>'+ago+'</td><td class="hwid" title="'+(l.hwid||'')+'">'+hwidShort+'</td><td><button class="btn '+(l.banned?'btn-unban':'btn-ban')+'" onclick="toggleBan(\''+l.key+'\','+(!l.banned)+')">'+(l.banned?'Riattiva':'Disattiva')+'</button><button class="btn btn-reset" onclick="resetHwid(\''+l.key+'\')">Reset HWID</button><button class="btn btn-user" onclick="resetUser(\''+l.key+'\')">Reset User</button><button class="btn btn-extend" onclick="extend(\''+l.key+'\')">+30gg</button><button class="btn btn-del" onclick="delLic(\''+l.key+'\')">Elimina</button></td>';rows.appendChild(tr);}document.getElementById('sTotal').textContent=j.licenses.length;document.getElementById('sOnline').textContent=on;document.getElementById('sBanned').textContent=ban;document.getElementById('sExpired').textContent=exp;}
-async function createLic(){const username=document.getElementById('newUser').value.trim();const days=parseInt(document.getElementById('newDays').value,10)||30;const note=document.getElementById('newNote').value;if(!username){showToast('Inserisci nome utente');return;}const j=await api('/api/admin/create',{days,username,note});if(j.ok){showToast('Chiave: '+j.license.key);document.getElementById('newUser').value='';document.getElementById('newNote').value='';refresh();}else showToast(j.msg||'Errore');}
-async function toggleBan(k,b){await api('/api/admin/ban',{key:k,banned:b});refresh();}
-async function resetHwid(k){if(confirm('Reset HWID?')){await api('/api/admin/reset',{key:k});refresh();}}
-async function resetUser(k){if(confirm('Reset utente?')){await api('/api/admin/resetUser',{key:k});refresh();}}
-async function extend(k){await api('/api/admin/extend',{key:k,days:30});refresh();}
-async function delLic(k){if(confirm('Eliminare?')){await api('/api/admin/delete',{key:k});refresh();}}
+// ============ Stato ============
+let TOKEN = '';
+let timer = null, refreshTimer = null;
+let currentPage = 1, currentFilter = 'all', totalPages = 1;
+let currentDetailKey = null;
+let modalDirty = { detail: false, create: false };
+
+// ============ Utils ============
+function showToast(m, type){
+  const t = document.getElementById('toast');
+  t.textContent = m;
+  t.className = type ? type : '';
+  t.classList.add('show');
+  clearTimeout(t._to);
+  t._to = setTimeout(() => t.classList.remove('show'), 3000);
+}
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function timeAgo(sec){
+  if (sec == null) return '—';
+  if (sec < 60) return sec + 's fa';
+  if (sec < 3600) return Math.floor(sec/60) + 'm fa';
+  if (sec < 86400) return Math.floor(sec/3600) + 'h fa';
+  return Math.floor(sec/86400) + 'g fa';
+}
+function fmtDate(ts){
+  if (!ts || ts >= Number.MAX_SAFE_INTEGER - 1) return '∞ Mai';
+  return new Date(ts).toLocaleString('it-IT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+function fmtDateOnly(ts){
+  if (!ts || ts >= Number.MAX_SAFE_INTEGER - 1) return '∞ Mai';
+  return new Date(ts).toLocaleDateString('it-IT', {day:'2-digit',month:'long',year:'numeric'});
+}
+
+// ============ API ============
+async function api(p, b){
+  const r = await fetch(p, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-Admin-Token':TOKEN},
+    body: JSON.stringify(b||{})
+  });
+  if (r.status === 401) { showToast('Sessione scaduta', 'error'); logout(); return {ok:false}; }
+  return r.json();
+}
+async function apiGet(p){
+  const r = await fetch(p, {headers:{'X-Admin-Token':TOKEN}});
+  if (r.status === 401) { showToast('Sessione scaduta', 'error'); logout(); return {ok:false}; }
+  return r.json();
+}
+
+// ============ Auth ============
+async function doLogin(){
+  const pw = document.getElementById('pw').value;
+  if (!pw) return showToast('Inserisci la password', 'error');
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true; btn.textContent = 'Accesso…';
+  try {
+    const r = await fetch('/api/admin/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({password:pw})
+    });
+    const j = await r.json();
+    if (j.ok) {
+      TOKEN = j.token;
+      sessionStorage.setItem('void_token', TOKEN);
+      document.getElementById('login').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      refresh(); refreshStats();
+      timer = setInterval(refresh, 3000);
+      refreshTimer = setInterval(refreshStats, 5000);
+    } else {
+      showToast(j.msg || 'Password errata', 'error');
+    }
+  } catch(e){ showToast('Errore di rete', 'error'); }
+  btn.disabled = false; btn.textContent = 'Accedi alla Dashboard';
+}
+async function logout(){
+  try { await api('/api/admin/logout'); } catch(e){}
+  sessionStorage.removeItem('void_token');
+  TOKEN = '';
+  if (timer) clearInterval(timer);
+  if (refreshTimer) clearInterval(refreshTimer);
+  location.reload();
+}
+
+// ============ Refresh ============
+async function refresh(){
+  if (!TOKEN) return;
+  const q = document.getElementById('search').value.trim();
+  const params = new URLSearchParams({q, filter: currentFilter, page: currentPage, perPage: 50});
+  const j = await apiGet('/api/admin/list?' + params);
+  if (!j.ok) return;
+
+  totalPages = Math.max(1, Math.ceil(j.total / j.perPage));
+  if (currentPage > totalPages) { currentPage = totalPages; return refresh(); }
+
+  const rows = document.getElementById('rows');
+  rows.innerHTML = '';
+
+  if (j.licenses.length === 0) {
+    rows.innerHTML = '<tr class="empty-row"><td colspan="7">Nessuna licenza trovata.<br><span style="font-size:11px;opacity:.6">Crea la prima con il pulsante "+ Nuova Licenza"</span></td></tr>';
+  }
+
+  for (const l of j.licenses) {
+    const isInf = !!l.infinite;
+    const ed = isInf ? '' : new Date(l.expiresAt).toLocaleDateString('it-IT');
+    const dl = isInf ? '' : Math.floor((l.expiresAt - j.serverTime) / 86400000);
+    const hs = l.hwid ? l.hwid.slice(0,8) + '…' : '—';
+    let badge;
+    if (l.banned) badge = '<span class="badge banned">Disattivata</span>';
+    else if (l.expired) badge = '<span class="badge expired">Scaduta</span>';
+    else if (l.online) badge = '<span class="badge online">Online</span>';
+    else badge = '<span class="badge offline">Offline</span>';
+
+    const expiresCell = isInf
+      ? '<span class="badge infinite">∞ Mai</span>'
+      : ed + ' <span style="color:var(--dim)">(' + dl + 'gg)</span>';
+
+    const tr = document.createElement('tr');
+    tr.onclick = () => openDetail(l.key);
+    tr.innerHTML =
+      '<td class="key">' + esc(l.key) + '</td>' +
+      '<td class="user">' + (l.username ? esc(l.username) : '—') + '</td>' +
+      '<td>' + badge + '</td>' +
+      '<td>' + expiresCell + '</td>' +
+      '<td style="color:var(--mid)">' + timeAgo(l.lastPingAgo) + '</td>' +
+      '<td class="hwid">' + esc(hs) + '</td>' +
+      '<td><span class="row-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></td>';
+    rows.appendChild(tr);
+  }
+
+  document.getElementById('pageInfo').textContent = j.total + ' risultat' + (j.total===1?'o':'i') + ' · pagina ' + j.page + '/' + totalPages;
+  renderPagination();
+}
+async function refreshStats(){
+  if (!TOKEN) return;
+  const j = await apiGet('/api/admin/stats');
+  if (!j.ok) return;
+  document.getElementById('sTotal').textContent = j.stats.total;
+  document.getElementById('sOnline').textContent = j.stats.online;
+  document.getElementById('sBanned').textContent = j.stats.banned;
+  document.getElementById('sExpired').textContent = j.stats.expired;
+}
+
+// ============ Filtri / ricerca / paginazione ============
+let searchTO = null;
+function debouncedRefresh(){
+  clearTimeout(searchTO);
+  searchTO = setTimeout(() => { currentPage = 1; refresh(); }, 300);
+}
+document.getElementById('filters').addEventListener('click', e => {
+  const b = e.target.closest('button[data-filter]');
+  if (!b) return;
+  document.querySelectorAll('#filters button').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  currentFilter = b.dataset.filter;
+  currentPage = 1;
+  refresh();
+});
+function renderPagination(){
+  const el = document.getElementById('pages');
+  el.innerHTML = '';
+  if (totalPages <= 1) return;
+  const prev = document.createElement('button');
+  prev.textContent = '‹'; prev.disabled = currentPage === 1;
+  prev.onclick = () => { currentPage--; refresh(); };
+  el.appendChild(prev);
+
+  const range = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) range.push(i);
+    else if (range[range.length-1] !== '…') range.push('…');
+  }
+  for (const p of range) {
+    if (p === '…') { const s = document.createElement('span'); s.textContent = '…'; s.style.padding = '6px'; el.appendChild(s); }
+    else {
+      const b = document.createElement('button');
+      b.textContent = p;
+      if (p === currentPage) b.classList.add('active');
+      b.onclick = () => { currentPage = p; refresh(); };
+      el.appendChild(b);
+    }
+  }
+  const next = document.createElement('button');
+  next.textContent = '›'; next.disabled = currentPage === totalPages;
+  next.onclick = () => { currentPage++; refresh(); };
+  el.appendChild(next);
+}
+
+// ============ Modale: Crea ============
+function openCreate(){
+  modalDirty.create = false;
+  document.getElementById('createBody').innerHTML =
+    '<div class="field">' +
+      '<label>Nome utente</label>' +
+      '<input type="text" id="cUser" placeholder="es. MarioRossi" autocomplete="off">' +
+      '<div class="hint">Deve essere univoco tra tutte le licenze</div>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Durata (giorni)</label>' +
+      '<input type="number" id="cDays" value="30" min="1" max="36500">' +
+      '<div class="hint">Da 1 a 36500 giorni (100 anni). Se attivi "infinita" questo campo viene ignorato.</div>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Opzioni</label>' +
+      '<label class="toggle-field">' +
+        '<input type="checkbox" id="cInfinite" onchange="toggleInfiniteInput()">' +
+        '<span>♾️ Licenza infinita (non scade mai)</span>' +
+      '</label>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Nota (opzionale)</label>' +
+      '<textarea id="cNote" placeholder="es. Cliente premium, rinnovo mensile…"></textarea>' +
+    '</div>';
+  document.getElementById('createFooter').innerHTML =
+    '<button class="btn-ghost" onclick="closeModal(\'modalCreate\')">Annulla</button>' +
+    '<button class="btn-primary" onclick="createLic()">' +
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+      'Crea Licenza' +
+    '</button>';
+  setTimeout(() => {
+    ['cUser','cDays','cNote','cInfinite'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => { modalDirty.create = true; });
+      el.addEventListener('change', () => { modalDirty.create = true; });
+    });
+    document.getElementById('cUser').focus();
+  }, 80);
+  document.getElementById('modalCreate').classList.add('show');
+}
+
+function toggleInfiniteInput(){
+  const inf = document.getElementById('cInfinite').checked;
+  const days = document.getElementById('cDays');
+  days.disabled = inf;
+  days.style.opacity = inf ? '.4' : '1';
+  days.style.cursor = inf ? 'not-allowed' : '';
+}
+
+async function createLic(){
+  const username = document.getElementById('cUser').value.trim();
+  const infinite = document.getElementById('cInfinite').checked;
+  const days = infinite ? 0 : (parseInt(document.getElementById('cDays').value, 10) || 30);
+  const note = document.getElementById('cNote').value;
+  if (!username) return showToast('Inserisci il nome utente', 'error');
+  if (!infinite && (days < 1 || days > 36500)) return showToast('Giorni non validi (1-36500)', 'error');
+  const j = await api('/api/admin/create', {days, username, note, infinite});
+  if (!j.ok) return showToast(j.msg || 'Errore', 'error');
+  modalDirty.create = false;
+  showSuccessScreen(j.license);
+  refresh(); refreshStats();
+}
+
+function showSuccessScreen(lic){
+  const isInf = !!lic.infinite;
+  const expiresFmt = isInf ? '∞ Mai' : fmtDateOnly(lic.expiresAt);
+  const createdFmt = fmtDate(lic.createdAt);
+  const durationFmt = isInf ? '∞ Infinita' : Math.round((lic.expiresAt - lic.createdAt) / 86400000) + ' giorni';
+
+  document.getElementById('createBody').innerHTML =
+    '<div class="success-screen">' +
+      '<div class="success-icon">' +
+        '<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' +
+      '</div>' +
+      '<h3>Licenza creata!</h3>' +
+      '<p>Copiala e inviala all\'utente. Non verrà mostrata di nuovo dopo la chiusura.</p>' +
+      '<div class="key-display">' +
+        '<div class="key-value">' + esc(lic.key) + '</div>' +
+      '</div>' +
+      '<button class="copy-large" id="copyBtn" onclick="copySuccessKey(\'' + lic.key + '\')">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+        '<span id="copyLabel">Copia chiave</span>' +
+      '</button>' +
+      '<div class="key-meta">' +
+        '<div class="meta-item"><div class="lbl">Utente</div><div class="val">' + esc(lic.username) + '</div></div>' +
+        '<div class="meta-item"><div class="lbl">Durata</div><div class="val">' + durationFmt + '</div></div>' +
+        '<div class="meta-item"><div class="lbl">Scade il</div><div class="val">' + expiresFmt + '</div></div>' +
+        '<div class="meta-item"><div class="lbl">Creata</div><div class="val">' + createdFmt + '</div></div>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('createFooter').innerHTML =
+    '<button class="btn-ghost" onclick="openCreate()">+ Crea un\'altra</button>' +
+    '<button class="btn-primary" onclick="closeModal(\'modalCreate\')">Chiudi</button>';
+}
+
+function copySuccessKey(k){
+  navigator.clipboard.writeText(k).then(() => {
+    const btn = document.getElementById('copyBtn');
+    const lbl = document.getElementById('copyLabel');
+    if (btn && lbl) {
+      btn.classList.add('copied');
+      lbl.textContent = 'Copiata!';
+      setTimeout(() => { btn.classList.remove('copied'); lbl.textContent = 'Copia chiave'; }, 2000);
+    }
+    showToast('Chiave copiata negli appunti', 'success');
+  });
+}
+
+// ============ Modale: Dettaglio ============
+async function openDetail(key){
+  currentDetailKey = key;
+  const params = new URLSearchParams({q: key, perPage: 1});
+  const j = await apiGet('/api/admin/list?' + params);
+  if (!j.ok || !j.licenses[0]) return showToast('Licenza non trovata', 'error');
+  const l = j.licenses[0];
+  const isInf = !!l.infinite;
+
+  let badge;
+  if (l.banned) badge = '<span class="badge banned">Disattivata</span>';
+  else if (l.expired) badge = '<span class="badge expired">Scaduta</span>';
+  else if (l.online) badge = '<span class="badge online">Online</span>';
+  else badge = '<span class="badge offline">Offline</span>';
+
+  const dl = isInf ? '∞' : Math.floor((l.expiresAt - j.serverTime) / 86400000);
+  const expiryInputValue = isInf ? '' : new Date(l.expiresAt).toISOString().slice(0, 10);
+
+  document.getElementById('detailBody').innerHTML =
+    '<div class="field">' +
+      '<label>Chiave di licenza</label>' +
+      '<div style="display:flex;gap:8px;align-items:center">' +
+        '<div class="value" style="flex:1">' + esc(l.key) + '</div>' +
+        '<button class="btn-ghost" style="padding:11px 14px" onclick="copyKey(\'' + l.key + '\')" title="Copia">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>' +
+        '</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Stato</label>' +
+      '<div>' + badge + (isInf ? ' <span class="badge infinite">∞ Infinita</span>' : '') + '</div>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Nome utente</label>' +
+      '<input type="text" id="dUser" value="' + esc(l.username||'') + '" placeholder="—">' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>HWID</label>' +
+      '<div class="value">' + esc(l.hwid || '—') + '</div>' +
+      '<div class="hint">Usa "Reset HWID" per sbloccare la licenza su un altro PC</div>' +
+    '</div>' +
+    '<div class="expiry-block" style="margin-bottom:16px">' +
+      '<div class="expiry-title">Scadenza</div>' +
+      '<label class="toggle-field" style="margin-bottom:10px">' +
+        '<input type="checkbox" id="dInfinite" ' + (isInf ? 'checked' : '') + ' onchange="toggleDetailInfinite()">' +
+        '<span>♾️ Licenza infinita (non scade mai)</span>' +
+      '</label>' +
+      '<div id="dExpiryWrap" style="' + (isInf ? 'opacity:.4;pointer-events:none' : '') + '">' +
+        '<input type="date" id="dExpiryDate" value="' + expiryInputValue + '" style="width:100%;padding:11px 14px;background:rgba(0,0,0,.35);border:1px solid var(--line-strong);border-radius:10px;color:#fff;outline:none;font-size:13px;font-family:inherit;color-scheme:dark">' +
+        '<div class="quick-days">' +
+          '<button type="button" onclick="addDaysToDetail(7)">+7gg</button>' +
+          '<button type="button" onclick="addDaysToDetail(30)">+30gg</button>' +
+          '<button type="button" onclick="addDaysToDetail(90)">+90gg</button>' +
+          '<button type="button" onclick="addDaysToDetail(365)">+1 anno</button>' +
+          '<button type="button" onclick="addDaysToDetail(3650)">+10 anni</button>' +
+        '</div>' +
+        '<div class="hint" style="margin-top:8px">Modifica la data direttamente o usa i pulsanti rapidi. Clicca "Salva modifiche" per confermare.</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Nota</label>' +
+      '<textarea id="dNote" placeholder="Nessuna nota">' + esc(l.note||'') + '</textarea>' +
+    '</div>' +
+    '<div class="key-meta">' +
+      '<div class="meta-item"><div class="lbl">Creata il</div><div class="val">' + fmtDate(l.createdAt) + '</div></div>' +
+      '<div class="meta-item"><div class="lbl">Scade il</div><div class="val">' + (isInf ? '∞ Mai' : fmtDate(l.expiresAt) + ' <span style="color:var(--dim)">(' + dl + 'gg)</span>') + '</div></div>' +
+      '<div class="meta-item"><div class="lbl">Ultimo ping</div><div class="val">' + timeAgo(l.lastPingAgo) + '</div></div>' +
+      '<div class="meta-item"><div class="lbl">Ultimo IP</div><div class="val">' + esc(l.lastIp || '—') + '</div></div>' +
+    '</div>';
+
+  const banLabel = l.banned ? 'Riattiva' : 'Disattiva';
+  document.getElementById('detailFooter').innerHTML =
+    '<button class="btn-ghost" onclick="toggleBan(\'' + l.key + '\',' + (!l.banned) + ')">' + banLabel + '</button>' +
+    '<button class="btn-ghost" onclick="resetUser(\'' + l.key + '\')">Reset User</button>' +
+    '<button class="btn-ghost" onclick="resetHwid(\'' + l.key + '\')">Reset HWID</button>' +
+    (isInf ? '' : '<button class="btn-ghost" onclick="extend(\'' + l.key + '\')">Estendi…</button>') +
+    '<button class="btn-ghost" onclick="delLic(\'' + l.key + '\')" style="color:#FCA5A5;border-color:rgba(239,68,68,.3)">Elimina</button>' +
+    '<button class="btn-primary" onclick="saveDetail()">Salva modifiche</button>';
+
+  modalDirty.detail = false;
+  document.getElementById('modalDetail').classList.add('show');
+
+  ['dUser','dNote','dExpiryDate','dInfinite'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => { modalDirty.detail = true; });
+    el.addEventListener('change', () => { modalDirty.detail = true; });
+  });
+}
+
+function toggleDetailInfinite(){
+  const inf = document.getElementById('dInfinite').checked;
+  const wrap = document.getElementById('dExpiryWrap');
+  wrap.style.opacity = inf ? '.4' : '1';
+  wrap.style.pointerEvents = inf ? 'none' : 'auto';
+}
+
+function addDaysToDetail(n){
+  const input = document.getElementById('dExpiryDate');
+  const current = input.value ? new Date(input.value + 'T12:00:00') : new Date();
+  current.setDate(current.getDate() + n);
+  input.value = current.toISOString().slice(0, 10);
+  modalDirty.detail = true;
+}
+
+async function saveDetail(){
+  if (!currentDetailKey) return;
+  const username = document.getElementById('dUser').value.trim();
+  const note = document.getElementById('dNote').value;
+  const infinite = document.getElementById('dInfinite').checked;
+  const expiryDate = document.getElementById('dExpiryDate').value;
+
+  if (username) {
+    const r1 = await api('/api/admin/rename', {key: currentDetailKey, username});
+    if (!r1.ok) return showToast(r1.msg || 'Errore rename', 'error');
+  }
+  await api('/api/admin/note', {key: currentDetailKey, note});
+
+  if (infinite) {
+    const r = await api('/api/admin/setInfinite', {key: currentDetailKey});
+    if (!r.ok) return showToast(r.msg || 'Errore', 'error');
+  } else if (expiryDate) {
+    const ts = new Date(expiryDate + 'T23:59:59').getTime();
+    const r = await api('/api/admin/setExpiry', {key: currentDetailKey, expiresAt: ts});
+    if (!r.ok) return showToast(r.msg || 'Errore data', 'error');
+  }
+
+  modalDirty.detail = false;
+  showToast('Modifiche salvate', 'success');
+  closeModal('modalDetail', true);
+  refresh(); refreshStats();
+}
+
+function copyKey(k){
+  navigator.clipboard.writeText(k).then(() => showToast('Chiave copiata', 'success'));
+}
+
+// ============ Azioni ============
+async function toggleBan(k, b){
+  await api('/api/admin/ban', {key:k, banned:b});
+  showToast(b ? 'Licenza disattivata' : 'Licenza riattivata', 'success');
+  closeModal('modalDetail', true);
+  refresh(); refreshStats();
+}
+function resetHwid(k){
+  confirmAction('Reset HWID', 'Vuoi resettare l\'HWID di questa licenza? L\'utente potrà usarla su un altro PC.', async () => {
+    await api('/api/admin/reset', {key:k});
+    showToast('HWID resettato', 'success');
+    closeModal('modalDetail', true);
+    refresh();
+  });
+}
+function resetUser(k){
+  confirmAction('Reset utente', 'Vuoi resettare utente e HWID? La licenza tornerà non configurata.', async () => {
+    await api('/api/admin/resetUser', {key:k});
+    showToast('Utente resettato', 'success');
+    closeModal('modalDetail', true);
+    refresh();
+  });
+}
+function extend(k){
+  confirmAction('Estendi licenza', 'Quanti giorni vuoi aggiungere?', async (days) => {
+    const r = await api('/api/admin/extend', {key:k, days});
+    if (!r.ok) { showToast(r.msg || 'Errore', 'error'); return; }
+    showToast('+' + days + ' giorni aggiunti', 'success');
+    closeModal('modalDetail', true);
+    refresh();
+  }, 'Estendi', true);
+}
+function delLic(k){
+  confirmAction('Elimina licenza', 'Questa azione è irreversibile. Continuare?', async () => {
+    await api('/api/admin/delete', {key:k});
+    showToast('Licenza eliminata', 'success');
+    closeModal('modalDetail', true);
+    refresh(); refreshStats();
+  });
+}
+function exportCsv(){
+  fetch('/api/admin/export.csv', {headers:{'X-Admin-Token':TOKEN}})
+    .then(r => r.blob())
+    .then(b => {
+      const url = URL.createObjectURL(b);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'voidlicense-export.csv';
+      a.click(); URL.revokeObjectURL(url);
+      showToast('CSV esportato', 'success');
+    });
+}
+
+// ============ Modale: Logs ============
+async function openLogs(){
+  const j = await apiGet('/api/admin/logs');
+  if (!j.ok) return;
+  const el = document.getElementById('logsList');
+  el.innerHTML = j.logs.length ? j.logs.map(l => {
+    const action = l.action.replace('.', ' ');
+    return '<div class="log-item ' + l.action.replace(/\./g,'\\.') + '">' +
+      '<div class="log-action">' + esc(action) + '</div>' +
+      (l.detail ? '<div class="log-detail">' + esc(l.detail) + '</div>' : '') +
+      '<div class="log-time">' + new Date(l.ts).toLocaleString('it-IT') + (l.ip ? ' · ' + esc(l.ip) : '') + '</div>' +
+    '</div>';
+  }).join('') : '<div style="text-align:center;color:var(--dim);padding:30px;font-size:12px">Nessun log</div>';
+  document.getElementById('modalLogs').classList.add('show');
+}
+
+// ============ Modale: Conferma ============
+let confirmCb = null;
+function confirmAction(title, msg, cb, okLabel, withInput){
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmOk').textContent = okLabel || 'Conferma';
+  const wrap = document.getElementById('confirmInputWrap');
+  const input = document.getElementById('confirmInput');
+  if (withInput) {
+    wrap.style.display = 'block';
+    input.value = '30';
+    setTimeout(() => { input.focus(); input.select(); }, 100);
+  } else {
+    wrap.style.display = 'none';
+    input.value = '';
+  }
+  confirmCb = cb;
+  document.getElementById('modalConfirm').classList.add('show');
+}
+function setConfirmDays(n){
+  const input = document.getElementById('confirmInput');
+  if (input) { input.value = n; input.focus(); }
+}
+function cancelConfirm(){
+  confirmCb = null;
+  document.getElementById('modalConfirm').classList.remove('show');
+}
+document.getElementById('confirmOk').onclick = async () => {
+  const cb = confirmCb; confirmCb = null;
+  const wrap = document.getElementById('confirmInputWrap');
+  const showInput = wrap.style.display !== 'none';
+  let val = null;
+  if (showInput) {
+    val = parseInt(document.getElementById('confirmInput').value, 10);
+    if (!val || val < 1 || val > 36500) {
+      showToast('Giorni non validi (1-36500)', 'error');
+      confirmCb = cb;
+      return;
+    }
+  }
+  document.getElementById('modalConfirm').classList.remove('show');
+  if (cb) await cb(val);
+};
+
+// ============ Chiusura modali con dirty-check ============
+function closeModal(id, force){
+  if (!force) {
+    if (id === 'modalDetail' && modalDirty.detail) {
+      confirmAction(
+        'Modifiche non salvate',
+        'Hai modificato dati senza salvare. Vuoi uscire comunque? Le modifiche andranno perse.',
+        () => { modalDirty.detail = false; closeModal(id, true); },
+        'Esci senza salvare'
+      );
+      return;
+    }
+    if (id === 'modalCreate' && modalDirty.create) {
+      confirmAction(
+        'Chiudere la finestra?',
+        'I dati inseriti nel form andranno persi. Continuare?',
+        () => { modalDirty.create = false; closeModal(id, true); },
+        'Chiudi'
+      );
+      return;
+    }
+  }
+  document.getElementById(id).classList.remove('show');
+  if (id === 'modalDetail') modalDirty.detail = false;
+  if (id === 'modalCreate') modalDirty.create = false;
+}
+
+// ============ Scorciatoie ============
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('modalConfirm').classList.contains('show')) { cancelConfirm(); return; }
+    if (document.getElementById('modalCreate').classList.contains('show'))  { closeModal('modalCreate');  return; }
+    if (document.getElementById('modalDetail').classList.contains('show'))  { closeModal('modalDetail');  return; }
+    if (document.getElementById('modalLogs').classList.contains('show'))    { closeModal('modalLogs');    return; }
+  }
+  if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'SELECT') {
+    e.preventDefault();
+    document.getElementById('search').focus();
+  }
+  if (e.key === 'Enter' && document.getElementById('modalCreate').classList.contains('show')) {
+    const active = document.activeElement;
+    if (active && (active.id === 'cUser' || active.id === 'cDays')) {
+      e.preventDefault();
+      createLic();
+    }
+  }
+  if (e.key === 'Enter' && document.getElementById('modalConfirm').classList.contains('show')) {
+    const wrap = document.getElementById('confirmInputWrap');
+    if (wrap && wrap.style.display !== 'none') {
+      e.preventDefault();
+      document.getElementById('confirmOk').click();
+    }
+  }
+});
+
+// ============ Init ============
+(function init(){
+  const saved = sessionStorage.getItem('void_token');
+  if (saved) {
+    TOKEN = saved;
+    fetch('/api/admin/stats', {headers:{'X-Admin-Token':TOKEN}})
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        if (j && j.ok) {
+          document.getElementById('login').style.display = 'none';
+          document.getElementById('app').style.display = 'block';
+          refresh(); refreshStats();
+          timer = setInterval(refresh, 3000);
+          refreshTimer = setInterval(refreshStats, 5000);
+        } else sessionStorage.removeItem('void_token');
+      })
+      .catch(() => sessionStorage.removeItem('void_token'));
+  }
+})();
 </script>
 </body>
 </html>
