@@ -6,13 +6,12 @@ const crypto = require('crypto');
 const PORT = process.env.PORT || 8090;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'void123';
 const ONLINE_TIMEOUT = 30000;
-const SESSION_TTL = 1000 * 60 * 60 * 12; // 12h
+const SESSION_TTL = 1000 * 60 * 60 * 12;
 const LOGIN_WINDOW = 1000 * 60 * 5;
 const LOGIN_MAX_ATTEMPTS = 5;
 const MAX_LOGS = 500;
 const MAX_DAYS = 36500;
 
-// Supporto disco persistente opzionale
 const DATA_DIR = process.env.DATA_DIR || __dirname;
 try { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
 const DB_FILE = path.join(DATA_DIR, 'db.json');
@@ -100,12 +99,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// ---------- Ping (per UptimeRobot) ----------
 app.get('/api/ping', (req, res) => {
   res.json({ ok: true, ts: Date.now(), version: '2.2.0' });
 });
 
-// ---------- API licenza ----------
 app.post('/api/license/check', (req, res) => {
   const { key, hwid, username } = req.body || {};
   if (!key) return res.json({ ok: false, msg: 'Chiave mancante' });
@@ -116,7 +113,7 @@ app.post('/api/license/check', (req, res) => {
   if (isExpired(lic)) return res.json({ ok: false, msg: 'Licenza scaduta' });
 
   if (!username) {
-    if (!lic.username) return res.json({ ok: false, msg: 'Licenza non configurata' });
+    if (!lic.username) return res.json({ ok: true, msg: 'OK', expires: lic.infinite ? -1 : lic.expiresAt, infinite: !!lic.infinite, username: null, needsSetup: true });
     if (lic.hwid && lic.hwid !== hwid) return res.json({ ok: false, msg: 'Licenza in uso su un altro PC' });
     lic.lastPing = Date.now(); lic.lastIp = req.ip || ''; saveDb();
     return res.json({ ok: true, msg: 'OK', expires: lic.infinite ? -1 : lic.expiresAt, infinite: !!lic.infinite, username: lic.username });
@@ -152,13 +149,15 @@ app.post('/api/license/register', (req, res) => {
   if (lic.banned) return res.json({ ok: false, msg: 'Licenza disattivata' });
   if (isExpired(lic)) return res.json({ ok: false, msg: 'Licenza scaduta' });
   if (!username || username.length < 2) return res.json({ ok: false, msg: 'Username corto' });
+  if (lic.username && lic.username.toLowerCase() !== username.toLowerCase())
+    return res.json({ ok: false, msg: 'Licenza gia associata a un altro utente' });
   const taken = db.licenses.find(l => l.username && l.username.toLowerCase() === username.toLowerCase() && l.key !== key);
   if (taken) return res.json({ ok: false, msg: 'Username gia in uso' });
   lic.username = username; lic.hwid = hwid; lic.lastPing = Date.now(); lic.lastIp = req.ip || ''; saveDb();
+  addLog('register', `${lic.key} → ${username}`, req.ip);
   res.json({ ok: true });
 });
 
-// ---------- Auth admin ----------
 function adminAuth(req, res, next) {
   const token = req.headers['x-admin-token'];
   if (token && checkSession(token)) return next();
@@ -203,14 +202,12 @@ app.get('/api/admin/list', adminAuth, (req, res) => {
     lastIp: l.lastIp, note: l.note || ''
   }));
 
-  if (q) {
-    list = list.filter(l =>
-      (l.key && l.key.toLowerCase().includes(q)) ||
-      (l.username && l.username.toLowerCase().includes(q)) ||
-      (l.note && l.note.toLowerCase().includes(q)) ||
-      (l.hwid && l.hwid.toLowerCase().includes(q))
-    );
-  }
+  if (q) list = list.filter(l =>
+    (l.key && l.key.toLowerCase().includes(q)) ||
+    (l.username && l.username.toLowerCase().includes(q)) ||
+    (l.note && l.note.toLowerCase().includes(q)) ||
+    (l.hwid && l.hwid.toLowerCase().includes(q)));
+
   if (filter === 'online') list = list.filter(l => l.online && !l.banned && !l.expired);
   else if (filter === 'offline') list = list.filter(l => !l.online && !l.banned && !l.expired);
   else if (filter === 'expired') list = list.filter(l => l.expired);
@@ -218,21 +215,16 @@ app.get('/api/admin/list', adminAuth, (req, res) => {
   else if (filter === 'infinite') list = list.filter(l => l.infinite);
 
   list.sort((a, b) => (b.online - a.online) || a.key.localeCompare(b.key));
-
   const total = list.length;
   const start = (page - 1) * perPage;
-  const paged = list.slice(start, start + perPage);
-
-  res.json({ ok: true, licenses: paged, total, page, perPage, serverTime: now });
+  res.json({ ok: true, licenses: list.slice(start, start + perPage), total, page, perPage, serverTime: now });
 });
 
 app.get('/api/admin/stats', adminAuth, (req, res) => {
-  const now = Date.now();
   const total = db.licenses.length;
   let online = 0, banned = 0, expired = 0, active = 0, infinite = 0;
   for (const l of db.licenses) {
-    const o = isOnline(l);
-    const e = isExpired(l);
+    const o = isOnline(l), e = isExpired(l);
     if (o && !l.banned && !e) online++;
     if (l.banned) banned++;
     if (e) expired++;
@@ -249,20 +241,21 @@ app.get('/api/admin/logs', adminAuth, (req, res) => {
 app.post('/api/admin/create', adminAuth, (req, res) => {
   const { days, username, note, infinite } = req.body || {};
   const d = parseInt(days, 10) || 30;
-  if (!username) return res.json({ ok: false, msg: 'Username obbligatorio' });
-  if (db.licenses.find(l => l.username && l.username.toLowerCase() === username.toLowerCase()))
+  if (!infinite && (d < 1 || d > MAX_DAYS)) return res.json({ ok: false, msg: 'Giorni non validi' });
+  if (username && db.licenses.find(l => l.username && l.username.toLowerCase() === username.toLowerCase()))
     return res.json({ ok: false, msg: 'Username gia usato' });
-  if (!infinite && (d < 1 || d > MAX_DAYS)) return res.json({ ok: false, msg: 'Giorni non validi (1-' + MAX_DAYS + ')' });
 
   const lic = {
-    key: genKey(), username, hwid: null,
+    key: genKey(),
+    username: username || null,
+    hwid: null,
     createdAt: Date.now(),
     expiresAt: infinite ? Number.MAX_SAFE_INTEGER : Date.now() + d * 24 * 3600 * 1000,
     infinite: !!infinite,
     banned: false, lastPing: 0, lastIp: null, note: note || ''
   };
   db.licenses.push(lic); saveDb();
-  addLog('create', `${lic.key} → ${username} (${infinite ? '∞' : d + 'gg'})`, req.ip);
+  addLog('create', `${lic.key}${username ? ' → ' + username : ''} (${infinite ? '∞' : d + 'gg'})`, req.ip);
   res.json({ ok: true, license: lic });
 });
 
@@ -294,9 +287,9 @@ app.post('/api/admin/resetUser', adminAuth, (req, res) => {
 app.post('/api/admin/extend', adminAuth, (req, res) => {
   const lic = findLic((req.body || {}).key);
   if (!lic) return res.json({ ok: false, msg: 'Licenza non trovata' });
-  if (lic.infinite) return res.json({ ok: false, msg: 'Licenza infinita: disattiva prima l\'infinito' });
+  if (lic.infinite) return res.json({ ok: false, msg: 'Licenza infinita' });
   const d = parseInt((req.body || {}).days, 10);
-  if (!d || d < 1 || d > MAX_DAYS) return res.json({ ok: false, msg: 'Giorni non validi (1-' + MAX_DAYS + ')' });
+  if (!d || d < 1 || d > MAX_DAYS) return res.json({ ok: false, msg: 'Giorni non validi' });
   lic.expiresAt = Math.max(lic.expiresAt, Date.now()) + d * 24 * 3600 * 1000;
   saveDb();
   addLog('extend', `${lic.key} +${d}gg`, req.ip);
@@ -305,7 +298,7 @@ app.post('/api/admin/extend', adminAuth, (req, res) => {
 
 app.post('/api/admin/setExpiry', adminAuth, (req, res) => {
   const lic = findLic((req.body || {}).key);
-  if (!lic) return res.json({ ok: false, msg: 'Licenza non trovata' });
+  if (!lic) return res.json({ ok: false });
   const ts = parseInt((req.body || {}).expiresAt, 10);
   if (!ts || !Number.isFinite(ts)) return res.json({ ok: false, msg: 'Data non valida' });
   lic.expiresAt = ts;
@@ -317,7 +310,7 @@ app.post('/api/admin/setExpiry', adminAuth, (req, res) => {
 
 app.post('/api/admin/setInfinite', adminAuth, (req, res) => {
   const lic = findLic((req.body || {}).key);
-  if (!lic) return res.json({ ok: false, msg: 'Licenza non trovata' });
+  if (!lic) return res.json({ ok: false });
   lic.infinite = true;
   lic.expiresAt = Number.MAX_SAFE_INTEGER;
   saveDb();
@@ -378,6 +371,6 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.listen(PORT, '0.0.0.0', () => {
   console.log('VoidLicense v2.2.0 - Port ' + PORT);
   if (ADMIN_PASSWORD === 'admin123' || ADMIN_PASSWORD === 'void123') {
-    console.warn('⚠️  ADMIN_PASSWORD è quella di default! Imposta la variabile d\'ambiente su Render.');
+    console.warn('⚠️  ADMIN_PASSWORD è quella di default! Impostala su Render.');
   }
 });
