@@ -7,18 +7,20 @@ const PORT = process.env.PORT || 8090;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'void123';
 const ONLINE_TIMEOUT = 30000;
 const SESSION_TTL = 1000 * 60 * 60 * 12; // 12h
-const LOGIN_WINDOW = 1000 * 60 * 5;      // 5 min
+const LOGIN_WINDOW = 1000 * 60 * 5;
 const LOGIN_MAX_ATTEMPTS = 5;
 const MAX_LOGS = 500;
-const MAX_DAYS = 36500;                  // ~100 anni
+const MAX_DAYS = 36500;
 
-const DB_FILE = path.join(__dirname, 'db.json');
-const BACKUP_FILE = path.join(__dirname, 'db.backup.json');
+// Supporto disco persistente opzionale
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+try { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
+const DB_FILE = path.join(DATA_DIR, 'db.json');
+const BACKUP_FILE = path.join(DATA_DIR, 'db.backup.json');
 
 let db = { licenses: [], logs: [] };
 let saveTimer = null;
 
-// ---------- Persistenza ----------
 function loadDb() {
   if (fs.existsSync(DB_FILE)) {
     try { db = JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); } catch (e) {}
@@ -31,7 +33,7 @@ function saveDbNow() {
     const tmp = DB_FILE + '.tmp';
     fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
     fs.renameSync(tmp, DB_FILE);
-    fs.copyFileSync(DB_FILE, BACKUP_FILE);
+    try { fs.copyFileSync(DB_FILE, BACKUP_FILE); } catch (e) {}
   } catch (e) {}
 }
 function saveDb() {
@@ -39,7 +41,6 @@ function saveDb() {
   saveTimer = setTimeout(saveDbNow, 300);
 }
 
-// ---------- Utils ----------
 function genKey() {
   const p = [];
   for (let i = 0; i < 4; i++) p.push(crypto.randomBytes(2).toString('hex').toUpperCase());
@@ -54,7 +55,6 @@ function addLog(action, detail, ip) {
   saveDb();
 }
 
-// ---------- Sessioni admin ----------
 const sessions = new Map();
 const loginAttempts = new Map();
 
@@ -88,7 +88,6 @@ function loginRateLimit(req, res, next) {
   next();
 }
 
-// ---------- App ----------
 loadDb();
 const app = express();
 app.set('trust proxy', true);
@@ -101,7 +100,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// ---------- API licenza (client) ----------
+// ---------- Ping (per UptimeRobot) ----------
+app.get('/api/ping', (req, res) => {
+  res.json({ ok: true, ts: Date.now(), version: '2.2.0' });
+});
+
+// ---------- API licenza ----------
 app.post('/api/license/check', (req, res) => {
   const { key, hwid, username } = req.body || {};
   if (!key) return res.json({ ok: false, msg: 'Chiave mancante' });
@@ -181,7 +185,6 @@ app.post('/api/admin/logout', adminAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// ---------- Admin: liste, filtri, stats ----------
 app.get('/api/admin/list', adminAuth, (req, res) => {
   const now = Date.now();
   const q = (req.query.q || '').toLowerCase().trim();
@@ -243,7 +246,6 @@ app.get('/api/admin/logs', adminAuth, (req, res) => {
   res.json({ ok: true, logs: db.logs.slice(0, 200) });
 });
 
-// ---------- Admin: azioni ----------
 app.post('/api/admin/create', adminAuth, (req, res) => {
   const { days, username, note, infinite } = req.body || {};
   const d = parseInt(days, 10) || 30;
@@ -289,7 +291,6 @@ app.post('/api/admin/resetUser', adminAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// Estendi di N giorni
 app.post('/api/admin/extend', adminAuth, (req, res) => {
   const lic = findLic((req.body || {}).key);
   if (!lic) return res.json({ ok: false, msg: 'Licenza non trovata' });
@@ -302,7 +303,6 @@ app.post('/api/admin/extend', adminAuth, (req, res) => {
   res.json({ ok: true, expiresAt: lic.expiresAt });
 });
 
-// Imposta una data di scadenza precisa
 app.post('/api/admin/setExpiry', adminAuth, (req, res) => {
   const lic = findLic((req.body || {}).key);
   if (!lic) return res.json({ ok: false, msg: 'Licenza non trovata' });
@@ -315,7 +315,6 @@ app.post('/api/admin/setExpiry', adminAuth, (req, res) => {
   res.json({ ok: true, expiresAt: lic.expiresAt });
 });
 
-// Rendi infinita
 app.post('/api/admin/setInfinite', adminAuth, (req, res) => {
   const lic = findLic((req.body || {}).key);
   if (!lic) return res.json({ ok: false, msg: 'Licenza non trovata' });
@@ -355,9 +354,7 @@ app.post('/api/admin/note', adminAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// ---------- Export CSV ----------
 app.get('/api/admin/export.csv', adminAuth, (req, res) => {
-  const now = Date.now();
   const rows = [['key', 'username', 'hwid', 'status', 'infinite', 'expiresAt', 'createdAt', 'lastPing', 'lastIp', 'note']];
   for (const l of db.licenses) {
     const status = l.banned ? 'banned' : (isExpired(l) ? 'expired' : (isOnline(l) ? 'online' : 'offline'));
@@ -376,12 +373,11 @@ app.get('/api/admin/export.csv', adminAuth, (req, res) => {
   res.send(csv);
 });
 
-// ---------- Static ----------
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log('VoidLicense v2.1.0 - Port ' + PORT);
-  if (ADMIN_PASSWORD === 'admin123') {
-    console.warn('⚠️  ADMIN_PASSWORD di default! Imposta la variabile d\'ambiente.');
+  console.log('VoidLicense v2.2.0 - Port ' + PORT);
+  if (ADMIN_PASSWORD === 'admin123' || ADMIN_PASSWORD === 'void123') {
+    console.warn('⚠️  ADMIN_PASSWORD è quella di default! Imposta la variabile d\'ambiente su Render.');
   }
 });
