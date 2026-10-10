@@ -21,7 +21,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(900px 
 body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse at center,black 20%,transparent 75%);pointer-events:none;z-index:0}
 #login,#app{position:relative;z-index:1}
 
-/* LOGIN */
 #login{max-width:400px;margin:80px auto;padding:44px 36px 36px;background:var(--card);backdrop-filter:blur(20px);border:1px solid var(--line-strong);border-radius:24px;text-align:center;box-shadow:0 30px 80px -20px rgba(0,0,0,.7),0 0 60px -20px var(--glow);animation:fadeUp .6s cubic-bezier(.2,.9,.3,1);position:relative;overflow:hidden}
 #login::before{content:'';position:absolute;top:-1px;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--accent-2),transparent);opacity:.8}
 .logo-orb{width:64px;height:64px;margin:0 auto 20px;border-radius:20px;background:linear-gradient(135deg,var(--accent),#6D28D9);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:#fff;box-shadow:0 12px 40px -8px var(--glow),0 0 0 1px rgba(255,255,255,.1) inset}
@@ -35,7 +34,6 @@ body::after{content:'';position:fixed;inset:0;background-image:linear-gradient(r
 #login button:hover{transform:translateY(-1px);box-shadow:0 14px 40px -10px var(--glow)}
 #login button:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-/* APP */
 #app{display:none;max-width:1280px;margin:0 auto;animation:fadeUp .5s cubic-bezier(.2,.9,.3,1)}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;gap:20px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:14px}
@@ -55,7 +53,6 @@ h1{font-size:22px;color:#fff;margin-bottom:2px;font-weight:800;letter-spacing:-.
 .icon-btn:hover{background:rgba(139,92,246,.1);border-color:var(--accent);color:var(--accent-3);transform:translateY(-1px)}
 .icon-btn.danger:hover{background:rgba(239,68,68,.1);border-color:var(--err);color:#FCA5A5}
 
-/* Toolbar */
 .toolbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
 .search-wrap{flex:1;min-width:220px;position:relative}
 .search-wrap input{width:100%;padding:12px 14px 12px 40px;background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--line-strong);border-radius:12px;color:#fff;outline:none;font-size:12px;font-family:inherit;transition:all .2s}
@@ -69,7 +66,6 @@ h1{font-size:22px;color:#fff;margin-bottom:2px;font-weight:800;letter-spacing:-.
 .btn-new{padding:12px 22px;background:linear-gradient(135deg,var(--accent),#7C3AED);color:#fff;border:none;border-radius:12px;cursor:pointer;font-weight:700;font-size:12px;font-family:inherit;transition:all .2s;box-shadow:0 8px 24px -10px var(--glow);display:flex;align-items:center;gap:8px}
 .btn-new:hover{transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--glow)}
 
-/* Tabella */
 .table-wrap{background:var(--card);backdrop-filter:blur(16px);border:1px solid var(--line-strong);border-radius:18px;overflow:hidden;box-shadow:0 30px 80px -30px rgba(0,0,0,.9)}
 .table-scroll{overflow-x:auto}
 table{width:100%;border-collapse:collapse;min-width:800px}
@@ -94,11 +90,11 @@ td.hwid{font-family:'JetBrains Mono',monospace;color:var(--dim);font-size:10px}
 .badge.infinite{color:var(--accent-3);background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.3)}
 .badge.waiting{color:#FCD34D;background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3)}
 .badge.waiting::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--warn);box-shadow:0 0 8px var(--warn);animation:pulse 2s infinite}
+.badge.program{color:var(--accent-2);background:rgba(139,92,246,.08);border-color:rgba(139,92,246,.25);font-family:'JetBrains Mono',monospace}
 .row-arrow{color:var(--dim);transition:all .15s;display:inline-flex}
 tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 .empty-row td{text-align:center;padding:70px 20px;color:var(--dim);font-size:12px}
 
-/* Paginazione */
 .pagination{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid var(--line);font-size:11px;color:var(--mid);flex-wrap:wrap;gap:10px}
 .pagination .pages{display:flex;gap:4px}
 .pagination button{padding:6px 12px;background:rgba(255,255,255,.04);border:1px solid var(--line-strong);border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;transition:all .15s}
@@ -106,7 +102,6 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 .pagination button:disabled{opacity:.3;cursor:not-allowed}
 .pagination button.active{background:linear-gradient(135deg,var(--accent),#7C3AED);border-color:transparent;color:#fff}
 
-/* MODALI */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);z-index:9998;display:none;align-items:center;justify-content:center;padding:20px;animation:fadeIn .2s}
 .modal-bg.show{display:flex}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -122,7 +117,6 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 .modal-body{padding:22px 26px}
 .modal-footer{padding:16px 26px 22px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 
-/* Campi */
 .field{margin-bottom:16px}
 .field:last-child{margin-bottom:0}
 .field label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mid);margin-bottom:8px}
@@ -133,26 +127,31 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 .field .value{font-family:'JetBrains Mono',monospace;color:var(--accent-3);font-size:12px;padding:11px 14px;background:rgba(0,0,0,.3);border-radius:8px;border:1px solid var(--line);word-break:break-all;line-height:1.5}
 .field input[type=date]{color-scheme:dark}
 
-/* Toggle campo */
 .toggle-field{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(0,0,0,.35);border:1px solid var(--line-strong);border-radius:10px;cursor:pointer;font-weight:600;font-size:12px;transition:all .15s;user-select:none}
 .toggle-field:hover{border-color:var(--accent);background:rgba(139,92,246,.05)}
 .toggle-field input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
 
-/* Expiry block */
 .expiry-block{padding:14px;background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:12px}
 .expiry-block .expiry-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--mid);margin-bottom:10px}
 .quick-days{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .quick-days button{padding:8px 12px;background:rgba(255,255,255,.04);border:1px solid var(--line-strong);border-radius:8px;color:var(--text);cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;transition:all .15s}
 .quick-days button:hover{background:rgba(139,92,246,.1);border-color:var(--accent);color:var(--accent-3)}
 
-/* Bottoni */
+.program-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;margin-bottom:6px;transition:all .15s}
+.program-item:hover{background:rgba(139,92,246,.06);border-color:var(--line-strong)}
+.program-item .pi-app{font-size:11px;font-weight:800;color:var(--accent-3);font-family:'JetBrains Mono',monospace;letter-spacing:.4px}
+.program-item .pi-hwid{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);margin-top:3px}
+.program-item .pi-meta{font-size:9px;color:var(--dim);margin-top:3px}
+.program-item .pi-actions{display:flex;gap:6px;flex-shrink:0}
+.pi-remove{padding:6px 10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;color:#FCA5A5;cursor:pointer;font-family:inherit;font-size:10px;font-weight:700;transition:all .15s}
+.pi-remove:hover{background:rgba(239,68,68,.15);border-color:var(--err)}
+
 .btn-primary{padding:11px 22px;background:linear-gradient(135deg,var(--accent),#7C3AED);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:12px;font-family:inherit;transition:all .2s;box-shadow:0 8px 24px -10px var(--glow);display:inline-flex;align-items:center;gap:8px}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 12px 30px -10px var(--glow)}
 .btn-primary.danger{background:linear-gradient(135deg,var(--err),#B91C1C);box-shadow:0 8px 24px -10px rgba(239,68,68,.5)}
 .btn-ghost{padding:11px 22px;background:rgba(255,255,255,.04);color:var(--text);border:1px solid var(--line-strong);border-radius:10px;cursor:pointer;font-weight:600;font-size:12px;font-family:inherit;transition:all .2s}
 .btn-ghost:hover{background:rgba(255,255,255,.08)}
 
-/* Schermata successo */
 .success-screen{text-align:center;padding:10px 0 0}
 .success-icon{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(34,197,94,.05));border:1px solid rgba(34,197,94,.35);display:flex;align-items:center;justify-content:center;animation:popIn .4s cubic-bezier(.2,.9,.3,1)}
 @keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -169,17 +168,15 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 .key-meta .meta-item .lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--dim);margin-bottom:3px}
 .key-meta .meta-item .val{font-size:12px;font-weight:700;color:var(--text)}
 
-/* Log list */
 .log-item{padding:11px 14px;border-radius:10px;margin-bottom:6px;background:rgba(0,0,0,.25);border:1px solid var(--line);transition:all .15s;animation:rowIn .3s ease both}
 .log-item:hover{background:rgba(139,92,246,.06);border-color:var(--line-strong)}
 .log-item .log-action{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--accent-3)}
 .log-item .log-detail{font-size:11px;color:var(--text);margin-top:3px;font-family:'JetBrains Mono',monospace;word-break:break-all}
 .log-item .log-time{font-size:9px;color:var(--dim);margin-top:3px}
-.log-item.ban .log-action,.log-item.delete .log-action,.log-item.reset-hwid .log-action{color:#FCA5A5}
+.log-item.ban .log-action,.log-item.delete .log-action,.log-item.reset-hwid .log-action,.log-item.remove-program .log-action{color:#FCA5A5}
 .log-item.create .log-action,.log-item.login\.ok .log-action,.log-item.register .log-action{color:#4ADE80}
-.log-item.set-infinite .log-action{color:var(--accent-3)}
+.log-item.set-infinite .log-action,.log-item.set-max-programs .log-action{color:var(--accent-3)}
 
-/* Toast */
 #toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-200%);background:rgba(22,22,29,.95);backdrop-filter:blur(20px);border:1px solid var(--accent);padding:14px 22px;border-radius:14px;font-size:12px;font-weight:600;z-index:99999;transition:transform .35s cubic-bezier(.2,.9,.3,1);box-shadow:0 20px 60px -15px var(--glow);max-width:90vw;color:#fff;display:flex;align-items:center;gap:10px}
 #toast::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--accent-2);box-shadow:0 0 12px var(--accent-2);flex-shrink:0}
 #toast.show{transform:translateX(-50%) translateY(0)}
@@ -206,7 +203,6 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login">
   <div class="logo-orb">V</div>
   <div class="brand-sub">VoidLicense</div>
@@ -216,7 +212,6 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
   <button id="loginBtn" onclick="doLogin()">Accedi alla Dashboard</button>
 </div>
 
-<!-- APP -->
 <div id="app">
   <div class="top">
     <div class="brand">
@@ -270,7 +265,7 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
         <thead>
           <tr>
             <th>Chiave</th><th>Utente</th><th>Stato</th><th>Scade</th>
-            <th>Ultimo ping</th><th>HWID</th><th style="width:40px"></th>
+            <th>Ultimo ping</th><th>Programmi</th><th style="width:40px"></th>
           </tr>
         </thead>
         <tbody id="rows"></tbody>
@@ -283,7 +278,6 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
   </div>
 </div>
 
-<!-- MODALE: CREA -->
 <div class="modal-bg" id="modalCreate">
   <div class="modal">
     <div class="modal-header">
@@ -298,7 +292,6 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
   </div>
 </div>
 
-<!-- MODALE: DETTAGLIO -->
 <div class="modal-bg" id="modalDetail">
   <div class="modal wide">
     <div class="modal-header">
@@ -313,7 +306,6 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
   </div>
 </div>
 
-<!-- MODALE: LOG -->
 <div class="modal-bg" id="modalLogs">
   <div class="modal wide">
     <div class="modal-header">
@@ -332,7 +324,6 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
   </div>
 </div>
 
-<!-- MODALE: CONFERMA -->
 <div class="modal-bg" id="modalConfirm">
   <div class="modal" style="max-width:440px">
     <div class="modal-header">
@@ -366,14 +357,12 @@ tbody tr:hover .row-arrow{color:var(--accent-3);transform:translateX(3px)}
 <div id="toast"></div>
 
 <script>
-// ============ Stato ============
 let TOKEN = '';
 let timer = null, refreshTimer = null;
 let currentPage = 1, currentFilter = 'all', totalPages = 1;
 let currentDetailKey = null;
 let modalDirty = { detail: false, create: false };
 
-// ============ Utils ============
 function showToast(m, type){
   const t = document.getElementById('toast');
   t.textContent = m;
@@ -399,7 +388,6 @@ function fmtDateOnly(ts){
   return new Date(ts).toLocaleDateString('it-IT', {day:'2-digit',month:'long',year:'numeric'});
 }
 
-// ============ API ============
 async function api(p, b){
   const r = await fetch(p, {
     method: 'POST',
@@ -415,7 +403,6 @@ async function apiGet(p){
   return r.json();
 }
 
-// ============ Auth ============
 async function doLogin(){
   const pw = document.getElementById('pw').value;
   if (!pw) return showToast('Inserisci la password', 'error');
@@ -450,7 +437,6 @@ async function logout(){
   location.reload();
 }
 
-// ============ Refresh ============
 async function refresh(){
   if (!TOKEN) return;
   const q = document.getElementById('search').value.trim();
@@ -473,7 +459,6 @@ async function refresh(){
     const isWaiting = !l.username;
     const ed = isInf ? '' : new Date(l.expiresAt).toLocaleDateString('it-IT');
     const dl = isInf ? '' : Math.floor((l.expiresAt - j.serverTime) / 86400000);
-    const hs = l.hwid ? l.hwid.slice(0,8) + '…' : '—';
     let badge;
     if (l.banned) badge = '<span class="badge banned">Disattivata</span>';
     else if (l.expired) badge = '<span class="badge expired">Scaduta</span>';
@@ -485,6 +470,10 @@ async function refresh(){
       ? '<span class="badge infinite">∞ Mai</span>'
       : ed + ' <span style="color:var(--dim)">(' + dl + 'gg)</span>';
 
+    const maxP = l.maxPrograms || 1;
+    const usedP = l.programsCount || 0;
+    const progCell = '<span class="badge program">' + usedP + ' / ' + maxP + '</span>';
+
     const tr = document.createElement('tr');
     tr.onclick = () => openDetail(l.key);
     tr.innerHTML =
@@ -493,7 +482,7 @@ async function refresh(){
       '<td>' + badge + '</td>' +
       '<td>' + expiresCell + '</td>' +
       '<td style="color:var(--mid)">' + timeAgo(l.lastPingAgo) + '</td>' +
-      '<td class="hwid">' + esc(hs) + '</td>' +
+      '<td>' + progCell + '</td>' +
       '<td><span class="row-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></span></td>';
     rows.appendChild(tr);
   }
@@ -511,7 +500,6 @@ async function refreshStats(){
   document.getElementById('sExpired').textContent = j.stats.expired;
 }
 
-// ============ Filtri / ricerca / paginazione ============
 let searchTO = null;
 function debouncedRefresh(){
   clearTimeout(searchTO);
@@ -556,7 +544,6 @@ function renderPagination(){
   el.appendChild(next);
 }
 
-// ============ Modale: Crea ============
 function openCreate(){
   modalDirty.create = false;
   document.getElementById('createBody').innerHTML =
@@ -569,6 +556,18 @@ function openCreate(){
       '<label>Durata (giorni)</label>' +
       '<input type="number" id="cDays" value="30" min="1" max="36500">' +
       '<div class="hint">Da 1 a 36500 giorni (100 anni). Se attivi "infinita" questo campo viene ignorato.</div>' +
+    '</div>' +
+    '<div class="field">' +
+      '<label>Max programmi per questa licenza</label>' +
+      '<input type="number" id="cMaxPrograms" value="1" min="1" max="50">' +
+      '<div class="hint">Quanti PC / programmi diversi può attivare questa licenza. Ogni PC è uno slot separato. 1 = solo 1 PC.</div>' +
+      '<div class="quick-days">' +
+        '<button type="button" onclick="setCreateMax(1)">1 PC</button>' +
+        '<button type="button" onclick="setCreateMax(2)">2 PC</button>' +
+        '<button type="button" onclick="setCreateMax(3)">3 PC</button>' +
+        '<button type="button" onclick="setCreateMax(5)">5 PC</button>' +
+        '<button type="button" onclick="setCreateMax(10)">10 PC</button>' +
+      '</div>' +
     '</div>' +
     '<div class="field">' +
       '<label>Opzioni</label>' +
@@ -588,7 +587,7 @@ function openCreate(){
       'Crea Licenza' +
     '</button>';
   setTimeout(() => {
-    ['cUser','cDays','cNote','cInfinite'].forEach(id => {
+    ['cUser','cDays','cNote','cInfinite','cMaxPrograms'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
       el.addEventListener('input', () => { modalDirty.create = true; });
@@ -597,6 +596,11 @@ function openCreate(){
     document.getElementById('cUser').focus();
   }, 80);
   document.getElementById('modalCreate').classList.add('show');
+}
+
+function setCreateMax(n){
+  const el = document.getElementById('cMaxPrograms');
+  if (el) { el.value = n; el.dispatchEvent(new Event('input')); }
 }
 
 function toggleInfiniteInput(){
@@ -612,8 +616,11 @@ async function createLic(){
   const infinite = document.getElementById('cInfinite').checked;
   const days = infinite ? 0 : (parseInt(document.getElementById('cDays').value, 10) || 30);
   const note = document.getElementById('cNote').value;
+  const maxPrograms = Math.max(1, Math.min(50, parseInt(document.getElementById('cMaxPrograms').value, 10) || 1));
+
   if (!infinite && (days < 1 || days > 36500)) return showToast('Giorni non validi (1-36500)', 'error');
-  const j = await api('/api/admin/create', {days, username, note, infinite});
+
+  const j = await api('/api/admin/create', {days, username, note, infinite, maxPrograms});
   if (!j.ok) return showToast(j.msg || 'Errore', 'error');
   modalDirty.create = false;
   showSuccessScreen(j.license);
@@ -626,6 +633,7 @@ function showSuccessScreen(lic){
   const createdFmt = fmtDate(lic.createdAt);
   const durationFmt = isInf ? '∞ Infinita' : Math.round((lic.expiresAt - lic.createdAt) / 86400000) + ' giorni';
   const userFmt = lic.username ? esc(lic.username) : '<span style="color:var(--warn)">In attesa</span>';
+  const maxP = lic.maxPrograms || 1;
 
   document.getElementById('createBody').innerHTML =
     '<div class="success-screen">' +
@@ -645,7 +653,7 @@ function showSuccessScreen(lic){
         '<div class="meta-item"><div class="lbl">Utente</div><div class="val">' + userFmt + '</div></div>' +
         '<div class="meta-item"><div class="lbl">Durata</div><div class="val">' + durationFmt + '</div></div>' +
         '<div class="meta-item"><div class="lbl">Scade il</div><div class="val">' + expiresFmt + '</div></div>' +
-        '<div class="meta-item"><div class="lbl">Creata</div><div class="val">' + createdFmt + '</div></div>' +
+        '<div class="meta-item"><div class="lbl">Max PC</div><div class="val">' + maxP + '</div></div>' +
       '</div>' +
     '</div>';
   document.getElementById('createFooter').innerHTML =
@@ -666,7 +674,6 @@ function copySuccessKey(k){
   });
 }
 
-// ============ Modale: Dettaglio ============
 async function openDetail(key){
   currentDetailKey = key;
   const params = new URLSearchParams({q: key, perPage: 1});
@@ -685,6 +692,26 @@ async function openDetail(key){
 
   const dl = isInf ? '∞' : Math.floor((l.expiresAt - j.serverTime) / 86400000);
   const expiryInputValue = isInf ? '' : new Date(l.expiresAt).toISOString().slice(0, 10);
+
+  const maxP = l.maxPrograms || 1;
+  const usedP = l.programsCount || 0;
+  const programs = l.programs || [];
+
+  const programsHTML = programs.length > 0
+    ? programs.map(p =>
+        '<div class="program-item">' +
+          '<div>' +
+            '<div class="pi-app">' + esc(p.appId || 'voidutility') + '</div>' +
+            '<div class="pi-hwid">' + esc((p.hwid || '').slice(0, 24)) + '…</div>' +
+            '<div class="pi-meta">Attivato: ' + new Date(p.activatedAt).toLocaleString('it-IT') + '</div>' +
+            '<div class="pi-meta">Ultimo uso: ' + new Date(p.lastSeen || p.activatedAt).toLocaleString('it-IT') + '</div>' +
+          '</div>' +
+          '<div class="pi-actions">' +
+            '<button class="pi-remove" onclick="removeProgram(\'' + l.key + '\',\'' + p.id + '\')">Rimuovi</button>' +
+          '</div>' +
+        '</div>'
+      ).join('')
+    : '<div class="hint" style="margin-top:8px">Nessun programma ancora registrato.</div>';
 
   document.getElementById('detailBody').innerHTML =
     '<div class="field">' +
@@ -706,9 +733,13 @@ async function openDetail(key){
       (isWaiting ? '<div class="hint" style="color:var(--warn)">Il cliente non ha ancora attivato la licenza. Il nome apparirà qui dopo la registrazione.</div>' : '') +
     '</div>' +
     '<div class="field">' +
-      '<label>HWID</label>' +
-      '<div class="value">' + esc(l.hwid || '—') + '</div>' +
-      '<div class="hint">Usa "Reset HWID" per sbloccare la licenza su un altro PC</div>' +
+      '<label>Programmi attivati <span style="color:var(--dim);font-weight:500;text-transform:none;letter-spacing:0">(' + usedP + ' / ' + maxP + ')</span></label>' +
+      '<div style="display:flex;gap:8px;margin-bottom:10px">' +
+        '<input type="number" id="dMaxPrograms" value="' + maxP + '" min="1" max="50" style="flex:1">' +
+        '<button type="button" class="btn-ghost" onclick="setMaxPrograms(\'' + l.key + '\')" style="padding:0 16px">Aggiorna max</button>' +
+      '</div>' +
+      '<div class="hint" style="margin-bottom:10px">Ogni PC attivato occupa uno slot. Rimuovi uno slot per liberare un PC.</div>' +
+      '<div>' + programsHTML + '</div>' +
     '</div>' +
     '<div class="expiry-block" style="margin-bottom:16px">' +
       '<div class="expiry-title">Scadenza</div>' +
@@ -774,6 +805,27 @@ function addDaysToDetail(n){
   modalDirty.detail = true;
 }
 
+async function setMaxPrograms(key){
+  const el = document.getElementById('dMaxPrograms');
+  if (!el) return;
+  const val = Math.max(1, Math.min(50, parseInt(el.value, 10) || 1));
+  const r = await api('/api/admin/setMaxPrograms', { key, maxPrograms: val });
+  if (!r.ok) return showToast(r.msg || 'Errore', 'error');
+  showToast('Max programmi aggiornato a ' + val, 'success');
+  closeModal('modalDetail', true);
+  refresh();
+}
+
+async function removeProgram(key, programId){
+  confirmAction('Rimuovi programma', 'Vuoi rimuovere questo slot? Il PC dovrà riattivarsi.', async () => {
+    const r = await api('/api/admin/removeProgram', { key, programId });
+    if (!r.ok) return showToast(r.msg || 'Errore', 'error');
+    showToast('Programma rimosso', 'success');
+    closeModal('modalDetail', true);
+    refresh();
+  });
+}
+
 async function saveDetail(){
   if (!currentDetailKey) return;
   const username = document.getElementById('dUser').value.trim();
@@ -806,7 +858,6 @@ function copyKey(k){
   navigator.clipboard.writeText(k).then(() => showToast('Chiave copiata', 'success'));
 }
 
-// ============ Azioni ============
 async function toggleBan(k, b){
   await api('/api/admin/ban', {key:k, banned:b});
   showToast(b ? 'Licenza disattivata' : 'Licenza riattivata', 'success');
@@ -858,7 +909,6 @@ function exportCsv(){
     });
 }
 
-// ============ Modale: Logs ============
 async function openLogs(){
   const j = await apiGet('/api/admin/logs');
   if (!j.ok) return;
@@ -874,7 +924,6 @@ async function openLogs(){
   document.getElementById('modalLogs').classList.add('show');
 }
 
-// ============ Modale: Conferma ============
 let confirmCb = null;
 function confirmAction(title, msg, cb, okLabel, withInput){
   document.getElementById('confirmTitle').textContent = title;
@@ -918,7 +967,6 @@ document.getElementById('confirmOk').onclick = async () => {
   if (cb) await cb(val);
 };
 
-// ============ Chiusura modali con dirty-check ============
 function closeModal(id, force){
   if (!force) {
     if (id === 'modalDetail' && modalDirty.detail) {
@@ -945,7 +993,6 @@ function closeModal(id, force){
   if (id === 'modalCreate') modalDirty.create = false;
 }
 
-// ============ Scorciatoie ============
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('modalConfirm').classList.contains('show')) { cancelConfirm(); return; }
@@ -959,7 +1006,7 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Enter' && document.getElementById('modalCreate').classList.contains('show')) {
     const active = document.activeElement;
-    if (active && (active.id === 'cUser' || active.id === 'cDays')) {
+    if (active && (active.id === 'cUser' || active.id === 'cDays' || active.id === 'cMaxPrograms')) {
       e.preventDefault();
       createLic();
     }
@@ -973,7 +1020,6 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// ============ Init ============
 (function init(){
   const saved = sessionStorage.getItem('void_token');
   if (saved) {
