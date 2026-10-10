@@ -10,12 +10,13 @@ const crypto = require('crypto');
  * ============================================================ */
 const PORT = process.env.PORT || 8090;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'void123';
-const ONLINE_TIMEOUT = 30000;             // 30s → considerato online
-const SESSION_TTL = 1000 * 60 * 60 * 12;  // 12h
-const LOGIN_WINDOW = 1000 * 60 * 5;       // 5 min
+const ONLINE_TIMEOUT = 30000;
+const SESSION_TTL = 1000 * 60 * 60 * 12;
+const LOGIN_WINDOW = 1000 * 60 * 5;
 const LOGIN_MAX_ATTEMPTS = 5;
 const MAX_LOGS = 500;
 const MAX_DAYS = 36500;
+const LONGPOLL_TIMEOUT_MS = 25000;
 
 const DATA_DIR = process.env.DATA_DIR || __dirname;
 try { if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
@@ -34,8 +35,6 @@ function loadDb() {
   }
   if (!db.licenses) db.licenses = [];
   if (!db.logs) db.logs = [];
-
-  // Migrazione: aggiungi maxPrograms se mancante
   for (const l of db.licenses) {
     if (typeof l.maxPrograms !== 'number') l.maxPrograms = 1;
     if (!Array.isArray(l.programs)) l.programs = [];
@@ -73,10 +72,7 @@ function addLog(action, detail, ip) {
 }
 
 /* ============================================================
- * PROGRAMMI ASSOCIATI A UNA LICENZA
- * Ogni licenza ha maxPrograms (default 1).
- * Ogni "programma" è identificato da: appId + hwid.
- * Es: { appId: 'voidutility', hwid: 'abc123...', activatedAt: ts }
+ * PROGRAMMI
  * ============================================================ */
 function findProgram(lic, appId, hwid) {
   if (!lic.programs) lic.programs = [];
@@ -99,12 +95,6 @@ function addProgram(lic, appId, hwid) {
     return true;
   }
   return false;
-}
-function removeProgram(lic, appId, hwid) {
-  if (!lic.programs) return false;
-  const before = lic.programs.length;
-  lic.programs = lic.programs.filter(p => !(p.appId === appId && p.hwid === hwid));
-  return lic.programs.length < before;
 }
 function removeAllPrograms(lic) {
   lic.programs = [];
@@ -147,6 +137,27 @@ function loginRateLimit(req, res, next) {
 }
 
 /* ============================================================
+ * LONG POLL
+ * ============================================================ */
+const longPollWaiters = new Map();
+
+function notifyWaiters(key, payload) {
+  const set = longPollWaiters.get(key);
+  if (!set) return 0;
+  const waiters = Array.from(set);
+  set.clear();
+  let count = 0;
+  for (const w of waiters) {
+    if (w.timer) clearTimeout(w.timer);
+    if (!w.res.headersSent) {
+      try { w.res.json(payload); count++; } catch (e) {}
+    }
+  }
+  if (count > 0) console.log(`[long-poll] Notified ${count} waiter(s) for ${key}`);
+  return count;
+}
+
+/* ============================================================
  * APP
  * ============================================================ */
 loadDb();
@@ -161,17 +172,12 @@ app.use((req, res, next) => {
   next();
 });
 
-/* ============================================================
- * PING PUBBLICO
- * ============================================================ */
 app.get('/api/ping', (req, res) => {
-  res.json({ ok: true, ts: Date.now(), version: '3.0.0' });
+  res.json({ ok: true, ts: Date.now(), version: '3.1.0' });
 });
 
 /* ============================================================
- * LICENSE CHECK — supporta multi-programma
- * Body: { key, hwid, username?, appId? }
- * Se appId manca → default 'voidutility' (retrocompatibile)
+ * LICENSE CHECK
  * ============================================================ */
 app.post('/api/license/check', (req, res) => {
   const { key, hwid, username, appId } = req.body || {};
@@ -181,21 +187,16 @@ app.post('/api/license/check', (req, res) => {
   if (!hwid) return res.json({ ok: false, msg: 'HWID mancante' });
 
   const lic = findLic(key);
-  if (!lic) return res.json({ ok: false, msg: 'Chiave non valida' });
-
-  // ✅ REVOCA ISTANTANEA
+  if (!lic) return res.json({ ok: false, revoked: true, msg: 'Chiave non valida' });
   if (lic.banned) return res.json({ ok: false, revoked: true, msg: 'Licenza disattivata' });
   if (isExpired(lic)) return res.json({ ok: false, revoked: true, expired: true, msg: 'Licenza scaduta' });
 
-  // Verifica limite programmi
   const existing = findProgram(lic, APP, hwid);
   if (!existing) {
     const used = countPrograms(lic, APP);
     if (used >= lic.maxPrograms) {
-      // Se lo slot è pieno ma uno dei programmi registrati è per un altro HWID
       return res.json({
         ok: false,
-        revoked: false,
         slotFull: true,
         msg: `Limite raggiunto (${lic.maxPrograms} programmi). Contatta l'assistenza per resettare.`
       });
@@ -205,15 +206,14 @@ app.post('/api/license/check', (req, res) => {
     existing.lastSeen = Date.now();
   }
 
-  // --- Registrazione utente ---
+  lic.lastPing = Date.now();
+  lic.lastIp = req.ip || '';
+  saveDb();
+
   if (!username) {
     if (!lic.username) {
-      lic.lastPing = Date.now();
-      lic.lastIp = req.ip || '';
-      saveDb();
       return res.json({
-        ok: true,
-        msg: 'OK',
+        ok: true, msg: 'OK',
         expires: lic.infinite ? -1 : lic.expiresAt,
         infinite: !!lic.infinite,
         username: null,
@@ -222,13 +222,8 @@ app.post('/api/license/check', (req, res) => {
         usedPrograms: countPrograms(lic, APP)
       });
     }
-    // Check HWID: se la licenza ha hwid vecchio diverso e non c'è programma → blocca
-    lic.lastPing = Date.now();
-    lic.lastIp = req.ip || '';
-    saveDb();
     return res.json({
-      ok: true,
-      msg: 'OK',
+      ok: true, msg: 'OK',
       expires: lic.infinite ? -1 : lic.expiresAt,
       infinite: !!lic.infinite,
       username: lic.username,
@@ -237,7 +232,6 @@ app.post('/api/license/check', (req, res) => {
     });
   }
 
-  // --- Registrazione con username ---
   if (!lic.username) {
     const taken = db.licenses.find(l =>
       l.username && l.username.toLowerCase() === username.toLowerCase()
@@ -246,12 +240,9 @@ app.post('/api/license/check', (req, res) => {
       return res.json({ ok: false, msg: 'Username gia usato' });
     }
     lic.username = username;
-    lic.lastPing = Date.now();
-    lic.lastIp = req.ip || '';
     saveDb();
     return res.json({
-      ok: true,
-      msg: 'OK',
+      ok: true, msg: 'OK',
       expires: lic.infinite ? -1 : lic.expiresAt,
       infinite: !!lic.infinite,
       username: lic.username,
@@ -264,13 +255,8 @@ app.post('/api/license/check', (req, res) => {
     return res.json({ ok: false, msg: 'Username non corrisponde' });
   }
 
-  lic.lastPing = Date.now();
-  lic.lastIp = req.ip || '';
-  saveDb();
-
   res.json({
-    ok: true,
-    msg: 'OK',
+    ok: true, msg: 'OK',
     expires: lic.infinite ? -1 : lic.expiresAt,
     infinite: !!lic.infinite,
     username: lic.username,
@@ -280,8 +266,7 @@ app.post('/api/license/check', (req, res) => {
 });
 
 /* ============================================================
- * HEARTBEAT — check ogni 5s dal client
- * Body: { key, hwid, username, appId? }
+ * HEARTBEAT
  * ============================================================ */
 app.post('/api/license/heartbeat', (req, res) => {
   const { key, hwid, username, appId } = req.body || {};
@@ -289,18 +274,13 @@ app.post('/api/license/heartbeat', (req, res) => {
 
   const lic = findLic(key);
   if (!lic) return res.json({ ok: false, revoked: true, msg: 'Licenza non trovata' });
-
-  // ✅ REVOCA ISTANTANEA — questi campi dicono al client di chiudersi
   if (lic.banned) return res.json({ ok: false, revoked: true, msg: 'Licenza disattivata' });
   if (isExpired(lic)) return res.json({ ok: false, revoked: true, expired: true, msg: 'Licenza scaduta' });
 
-  // Verifica che il programma sia registrato per questo HWID
   const prog = findProgram(lic, APP, hwid);
   if (!prog) {
     return res.json({
-      ok: false,
-      revoked: true,
-      hwid_mismatch: true,
+      ok: false, revoked: true, hwid_mismatch: true,
       msg: 'Questo PC non è autorizzato per la licenza'
     });
   }
@@ -322,14 +302,66 @@ app.post('/api/license/heartbeat', (req, res) => {
 });
 
 /* ============================================================
- * REGISTER (usato dal setup gate al primo avvio)
+ * LONG POLL WATCH
+ * ============================================================ */
+app.post('/api/license/watch', (req, res) => {
+  const { key, hwid, appId } = req.body || {};
+  const APP = appId || 'voidutility';
+
+  if (!key || !hwid) {
+    return res.json({ ok: false, msg: 'Parametri mancanti' });
+  }
+
+  const lic = findLic(key);
+
+  if (!lic) {
+    return res.json({ ok: false, revoked: true, msg: 'Licenza non trovata' });
+  }
+  if (lic.banned) {
+    return res.json({ ok: false, revoked: true, msg: 'Licenza disattivata' });
+  }
+  if (isExpired(lic)) {
+    return res.json({ ok: false, revoked: true, expired: true, msg: 'Licenza scaduta' });
+  }
+
+  const prog = findProgram(lic, APP, hwid);
+  if (!prog) {
+    return res.json({ ok: false, revoked: true, hwid_mismatch: true, msg: 'PC non autorizzato' });
+  }
+
+  prog.lastSeen = Date.now();
+  lic.lastPing = Date.now();
+  lic.lastIp = req.ip || '';
+  saveDb();
+
+  const waiter = { res, timer: null };
+  if (!longPollWaiters.has(key)) longPollWaiters.set(key, new Set());
+  longPollWaiters.get(key).add(waiter);
+
+  waiter.timer = setTimeout(() => {
+    const s = longPollWaiters.get(key);
+    if (s) s.delete(waiter);
+    if (!res.headersSent) {
+      res.json({ ok: true, ping: true });
+    }
+  }, LONGPOLL_TIMEOUT_MS);
+
+  req.on('close', () => {
+    if (waiter.timer) clearTimeout(waiter.timer);
+    const s = longPollWaiters.get(key);
+    if (s) s.delete(waiter);
+  });
+});
+
+/* ============================================================
+ * REGISTER
  * ============================================================ */
 app.post('/api/license/register', (req, res) => {
   const { key, hwid, username, appId } = req.body || {};
   const APP = appId || 'voidutility';
 
   const lic = findLic(key);
-  if (!lic) return res.json({ ok: false, msg: 'Chiave non valida' });
+  if (!lic) return res.json({ ok: false, revoked: true, msg: 'Chiave non valida' });
   if (lic.banned) return res.json({ ok: false, revoked: true, msg: 'Licenza disattivata' });
   if (isExpired(lic)) return res.json({ ok: false, revoked: true, expired: true, msg: 'Licenza scaduta' });
   if (!username || username.length < 2) return res.json({ ok: false, msg: 'Username corto' });
@@ -343,7 +375,6 @@ app.post('/api/license/register', (req, res) => {
   );
   if (taken) return res.json({ ok: false, msg: 'Username gia in uso' });
 
-  // Verifica limite programmi
   const existing = findProgram(lic, APP, hwid);
   if (!existing && countPrograms(lic, APP) >= lic.maxPrograms) {
     return res.json({
@@ -460,7 +491,7 @@ app.get('/api/admin/logs', adminAuth, (req, res) => {
 });
 
 /* ============================================================
- * ADMIN CREATE — con maxPrograms configurabile
+ * ADMIN CREATE
  * ============================================================ */
 app.post('/api/admin/create', adminAuth, (req, res) => {
   const { days, username, note, infinite, maxPrograms } = req.body || {};
@@ -493,7 +524,7 @@ app.post('/api/admin/create', adminAuth, (req, res) => {
 });
 
 /* ============================================================
- * ADMIN BAN/UNBAN — revoca istantanea
+ * ADMIN BAN
  * ============================================================ */
 app.post('/api/admin/ban', adminAuth, (req, res) => {
   const lic = findLic((req.body || {}).key);
@@ -501,11 +532,16 @@ app.post('/api/admin/ban', adminAuth, (req, res) => {
   lic.banned = !!(req.body || {}).banned;
   saveDb();
   addLog(lic.banned ? 'ban' : 'unban', lic.key, req.ip);
+
+  if (lic.banned) {
+    notifyWaiters(lic.key, { ok: false, revoked: true, msg: 'Licenza disattivata' });
+  }
+
   res.json({ ok: true });
 });
 
 /* ============================================================
- * ADMIN RESET HWID — rimuove TUTTI i programmi registrati
+ * ADMIN RESET
  * ============================================================ */
 app.post('/api/admin/reset', adminAuth, (req, res) => {
   const lic = findLic((req.body || {}).key);
@@ -514,6 +550,14 @@ app.post('/api/admin/reset', adminAuth, (req, res) => {
   lic.hwid = null;
   lic.lastPing = 0;
   saveDb();
+
+  notifyWaiters(lic.key, {
+    ok: false,
+    revoked: true,
+    hwid_mismatch: true,
+    msg: 'HWID resettato dal pannello'
+  });
+
   addLog('reset-hwid', lic.key, req.ip);
   res.json({ ok: true });
 });
@@ -526,22 +570,37 @@ app.post('/api/admin/resetUser', adminAuth, (req, res) => {
   lic.lastPing = 0;
   removeAllPrograms(lic);
   saveDb();
+
+  notifyWaiters(lic.key, {
+    ok: false,
+    revoked: true,
+    msg: 'Utente resettato dal pannello'
+  });
+
   addLog('reset-user', lic.key, req.ip);
   res.json({ ok: true });
 });
 
 /* ============================================================
- * ADMIN — rimuovi singolo programma
+ * ADMIN REMOVE PROGRAM
  * ============================================================ */
 app.post('/api/admin/removeProgram', adminAuth, (req, res) => {
   const { key, programId } = req.body || {};
   const lic = findLic(key);
   if (!lic) return res.json({ ok: false, msg: 'Licenza non trovata' });
   if (!Array.isArray(lic.programs)) lic.programs = [];
-  const before = lic.programs.length;
+
+  const removed = lic.programs.find(p => p.id === programId);
   lic.programs = lic.programs.filter(p => p.id !== programId);
   saveDb();
-  if (lic.programs.length < before) {
+
+  if (removed) {
+    notifyWaiters(lic.key, {
+      ok: false,
+      revoked: true,
+      hwid_mismatch: true,
+      msg: 'Slot rimosso dal pannello'
+    });
     addLog('remove-program', `${lic.key} → ${programId}`, req.ip);
     return res.json({ ok: true });
   }
@@ -549,7 +608,7 @@ app.post('/api/admin/removeProgram', adminAuth, (req, res) => {
 });
 
 /* ============================================================
- * ADMIN — setMaxPrograms
+ * ADMIN SET MAX PROGRAMS
  * ============================================================ */
 app.post('/api/admin/setMaxPrograms', adminAuth, (req, res) => {
   const { key, maxPrograms } = req.body || {};
@@ -559,6 +618,9 @@ app.post('/api/admin/setMaxPrograms', adminAuth, (req, res) => {
   lic.maxPrograms = mp;
   saveDb();
   addLog('set-max-programs', `${lic.key} → ${mp}`, req.ip);
+
+  notifyWaiters(lic.key, { ok: true, ping: true });
+
   res.json({ ok: true, maxPrograms: mp });
 });
 
@@ -574,6 +636,9 @@ app.post('/api/admin/extend', adminAuth, (req, res) => {
   lic.expiresAt = Math.max(lic.expiresAt, Date.now()) + d * 24 * 3600 * 1000;
   saveDb();
   addLog('extend', `${lic.key} +${d}gg`, req.ip);
+
+  notifyWaiters(lic.key, { ok: true, ping: true, expires: lic.expiresAt });
+
   res.json({ ok: true, expiresAt: lic.expiresAt });
 });
 
@@ -586,6 +651,13 @@ app.post('/api/admin/setExpiry', adminAuth, (req, res) => {
   lic.infinite = false;
   saveDb();
   addLog('set-expiry', `${lic.key} → ${new Date(ts).toISOString().slice(0, 10)}`, req.ip);
+
+  if (ts < Date.now()) {
+    notifyWaiters(lic.key, { ok: false, revoked: true, expired: true, msg: 'Licenza scaduta' });
+  } else {
+    notifyWaiters(lic.key, { ok: true, ping: true, expires: ts });
+  }
+
   res.json({ ok: true, expiresAt: lic.expiresAt });
 });
 
@@ -596,6 +668,9 @@ app.post('/api/admin/setInfinite', adminAuth, (req, res) => {
   lic.expiresAt = Number.MAX_SAFE_INTEGER;
   saveDb();
   addLog('set-infinite', lic.key, req.ip);
+
+  notifyWaiters(lic.key, { ok: true, ping: true, infinite: true });
+
   res.json({ ok: true });
 });
 
@@ -604,6 +679,9 @@ app.post('/api/admin/setInfinite', adminAuth, (req, res) => {
  * ============================================================ */
 app.post('/api/admin/delete', adminAuth, (req, res) => {
   const k = (req.body || {}).key;
+
+  notifyWaiters(k, { ok: false, revoked: true, msg: 'Licenza eliminata' });
+
   db.licenses = db.licenses.filter(l => l.key !== k);
   saveDb();
   addLog('delete', k, req.ip);
@@ -675,7 +753,8 @@ app.get('/api/admin/export.csv', adminAuth, (req, res) => {
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log('VoidLicense v3.0.0 - Port ' + PORT);
+  console.log('VoidLicense v3.1.0 - Port ' + PORT);
+  console.log('Long-poll timeout: ' + LONGPOLL_TIMEOUT_MS + 'ms');
   if (ADMIN_PASSWORD === 'admin123' || ADMIN_PASSWORD === 'void123') {
     console.warn('⚠️  ADMIN_PASSWORD è quella di default! Impostala su Render.');
   }
